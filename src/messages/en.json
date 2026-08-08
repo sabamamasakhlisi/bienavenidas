@@ -1,0 +1,76 @@
+{
+  "common": {
+    "brand": "BIEN*VENIDAS",
+    "tagline": "Independent press",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "languageLabel": "Change language",
+    "backToCatalogue": "Back to the catalogue",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "libros": "Books",
+    "bienvenidas": "Bien*venidas",
+    "contacto": "Contact"
+  },
+  "metadata": {
+    "title": "BIEN*VENIDAS — Independent press",
+    "description": "An independent press and online bookshop. Books that arrive, stay, and get passed on."
+  },
+  "home": {
+    "statement": "We publish books that arrive, stay, and get passed on.",
+    "intro": "An independent press devoted to voices that widen what literature can hold.",
+    "explore": "Explore",
+    "sections": {
+      "libros": "The full catalogue, title by title.",
+      "bienvenidas": "Who we are and why we publish.",
+      "contacto": "Write to us: manuscripts, press, booksellers."
+    }
+  },
+  "libros": {
+    "title": "Books",
+    "lead": "Our catalogue.",
+    "empty": "No titles published yet. The first ones arrive soon.",
+    "shelfHint": "Shelf: hover a book to see its cover, click to open its entry.",
+    "openCall": "Open call"
+  },
+  "book": {
+    "notFoundTitle": "Title not found",
+    "notFoundBody": "We couldn't find this book in our catalogue.",
+    "author": "Author",
+    "pages": "Pages",
+    "published": "Published",
+    "isbn": "ISBN",
+    "addToCart": "Add {title} to cart",
+    "added": "Added",
+    "addedTo": "{title} added to cart",
+    "stock": {
+      "in_stock": "In stock",
+      "low_stock": "Low stock",
+      "out_of_stock": "Out of stock",
+      "preorder": "Pre-order",
+      "out_of_print": "Out of print"
+    }
+  },
+  "bienvenidas": {
+    "title": "Bien*venidas",
+    "lead": "Our manifesto.",
+    "body": "This page will hold the press's manifesto, the story of the house, and profiles of the people who make it.",
+    "imageAlt": "BIEN*VENIDAS mural",
+    "panLabel": "Pannable image: drag, scroll or use the arrow keys to move around it."
+  },
+  "contacto": {
+    "title": "Contact",
+    "intro": "For manuscripts, collaborations\nor any other enquiry:",
+    "social": {
+      "instagram": "Instagram",
+      "substack": "Substack",
+      "tiktok": "TikTok"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you're looking for doesn't exist or has moved.",
+    "home": "Back to home"
+  }
+}

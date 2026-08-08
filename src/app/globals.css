@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  /* Sampled from the INSPO frame. */
+  --background: #221e1f; /* page — warm near-black */
+  --foreground: #f0ece7; /* cream body text */
+  --brand: #4d3738; /* header bar, price buttons — matches the logo artwork */
+  --shelf: #191616; /* band the books stand on */
+  --muted: #b9b0ac; /* secondary metadata */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-shelf: var(--shelf);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-switzer);
+  --font-serif: var(--font-baskervvol);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-switzer);
+}
+
+.bask-font {
+  font-family: var(--font-baskervvol);
+}
+
+/* Long-form quote setting: serif, generous leading, slightly tightened colour. */
+.quote {
+  font-family: var(--font-baskervvol);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
