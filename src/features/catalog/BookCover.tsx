@@ -3,33 +3,38 @@ import Image from "next/image";
 import type { Book } from "@/types/book";
 
 /**
- * A cover, or a stand-in for one.
+ * A book's artwork, or a stand-in for it.
  *
- * No cover art exists in the repo yet, so a book without `cover` renders a
- * tinted plate at the same aspect ratio with the title set on it. That keeps
- * every layout honest about the space a real cover will occupy — adding the
- * file and setting `cover` is then a pure swap.
+ * Defaults to the cover; pass `image` to draw a different face of the same
+ * book, such as its spine on the shelf. A title with no artwork at all renders
+ * a tinted plate at the right aspect ratio with its name set on it, so every
+ * layout stays honest about the space real art will occupy.
  */
 export function BookCover({
   book,
   title,
+  image,
   className = "",
   sizes,
   priority = false,
 }: {
   book: Book;
   title: string;
+  /** Overrides `book.cover` — e.g. the spine. */
+  image?: Book["cover"];
   className?: string;
   sizes?: string;
   priority?: boolean;
 }) {
-  if (book.cover) {
+  const art = image ?? book.cover;
+
+  if (art) {
     return (
       <Image
-        src={book.cover.src}
-        alt={book.cover.alt || title}
-        width={book.cover.width}
-        height={book.cover.height}
+        src={art.src}
+        alt={art.alt || title}
+        width={art.width}
+        height={art.height}
         sizes={sizes}
         priority={priority}
         className={`h-full w-full object-cover ${className}`}

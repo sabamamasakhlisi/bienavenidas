@@ -21,13 +21,15 @@ const MAX_WIDTH = 700;
 
 sharp.cache(false);
 
+/** Sources are the lossless drops; .avif/.webp are what this script writes. */
 const ORIGINALS = /\.(jpe?g|png)$/i;
 
 const files = (await readdir(DIR)).filter((f) => ORIGINALS.test(f));
 
 if (files.length === 0) {
   console.log(`No originals in ${DIR}/ — nothing to do.`);
-  console.log("Add e.g. joven-chica.jpg (named after the book's slug).");
+  console.log("Add e.g. joven-chica.png (named after the book's slug),");
+  console.log("or joven-chica.spine.png for the shelf view.");
 }
 
 const kb = async (f) => Math.round((await stat(f)).size / 1024) + " KB";

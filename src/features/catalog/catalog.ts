@@ -25,8 +25,8 @@ const books: Book[] = [
     credits: "cc. 2016 TIQQUN\nPrimera edición\nDiseño por Bernardina Studio",
     spine: { color: "#6f5257", width: 26 },
     coverTone: "#4a3a3d",
-    coverAspect: 0.63,
-    shelfWidth: "min(21vw, 300px)",
+    coverAspect: 0.633,
+    shelfWidth: 300,
     translations: {
       es: {
         quote:
@@ -58,8 +58,10 @@ const books: Book[] = [
     credits: "cc. 2026 Veronica Obenauer\nPrimera edición",
     spine: { color: "#e8e6e1", width: 30 },
     coverTone: "#dedbd5",
-    coverAspect: 0.55,
-    shelfWidth: "min(16vw, 225px)",
+    coverAspect: 0.666,
+    shelfWidth: 225,
+    spineAspect: 0.184,
+    spineWidth: 62,
     shelfLean: -3,
     translations: {
       en: {
@@ -88,8 +90,8 @@ const books: Book[] = [
     credits: "Deadline 31 de julio\nhola@bienavenidas.com",
     spine: { color: "#e7c6dc", width: 22 },
     coverTone: "#e3c4d8",
-    coverAspect: 0.76,
-    shelfWidth: "min(22vw, 310px)",
+    coverAspect: 0.746,
+    shelfWidth: 310,
     translations: {
       en: {
         description:
@@ -115,17 +117,46 @@ export type ShelfItem =
   | { kind: "book"; slug: string };
 
 export const shelfLayout: ShelfItem[] = [
-  { kind: "spine", color: "#e7b9d4", width: 22, height: 54, lean: -4 },
-  { kind: "spine", color: "#2f5f9e", width: 25, height: 50, lean: -6 },
-  { kind: "spine", color: "#d6d4cf", width: 45, height: 59 },
-  { kind: "spine", color: "#8fd3ae", width: 26, height: 54 },
+  { kind: "spine", color: "#e7b9d4", width: 24, height: 54, lean: -4 },
+  { kind: "spine", color: "#2f5f9e", width: 38, height: 50, lean: -6 },
+  { kind: "spine", color: "#d6d4cf", width: 40, height: 59 },
+  { kind: "spine", color: "#8fd3ae", width: 52, height: 54 },
   { kind: "book", slug: "joven-chica" },
-  { kind: "spine", color: "#5aa8e6", width: 40, height: 57, lean: 4 },
+  { kind: "spine", color: "#5aa8e6", width: 30, height: 57, lean: 4 },
+  { kind: "spine", color: "#e8e6e1", width: 44, height: 52 },
+  { kind: "spine", color: "#7c2e45", width: 26, height: 49, lean: 3 },
+  { kind: "spine", color: "#c89a72", width: 60, height: 50, lean: 5 },
+  { kind: "spine", color: "#3f4a6b", width: 42, height: 56, lean: -3 },
   { kind: "book", slug: "witches-used-to-rule-the-web" },
+  { kind: "spine", color: "#f0efe9", width: 36, height: 51 },
+  { kind: "spine", color: "#6b7a52", width: 48, height: 58, lean: 2 },
+  { kind: "spine", color: "#d9c05a", width: 28, height: 50, lean: -2 },
+  { kind: "spine", color: "#6f5257", width: 38, height: 53 },
+  { kind: "spine", color: "#b8452f", width: 42, height: 47, lean: 4 },
+  { kind: "spine", color: "#d6d4cf", width: 34, height: 57 },
+  { kind: "spine", color: "#e7b9d4", width: 56, height: 52, lean: -3 },
+  { kind: "spine", color: "#2f5f9e", width: 44, height: 55 },
+  { kind: "spine", color: "#8fd3ae", width: 40, height: 48, lean: 3 },
+  { kind: "spine", color: "#e8e6e1", width: 30, height: 58 },
+  { kind: "spine", color: "#5aa8e6", width: 50, height: 51, lean: -4 },
   { kind: "book", slug: "open-call-sad-girls" },
-  { kind: "spine", color: "#7c2e45", width: 30, height: 49, lean: 3 },
-  { kind: "spine", color: "#c89a72", width: 25, height: 50, lean: 5 },
+  { kind: "spine", color: "#c89a72", width: 42, height: 53 },
+  { kind: "spine", color: "#3f4a6b", width: 38, height: 49, lean: 2 },
+  { kind: "spine", color: "#f0efe9", width: 42, height: 56 },
+  { kind: "spine", color: "#7c2e45", width: 46, height: 50, lean: -3 },
+  { kind: "spine", color: "#6b7a52", width: 32, height: 54 },
+  { kind: "spine", color: "#d9c05a", width: 58, height: 52, lean: 4 },
+  { kind: "spine", color: "#6f5257", width: 28, height: 47 },
+  { kind: "spine", color: "#b8452f", width: 44, height: 55, lean: -2 },
 ];
+
+/**
+ * Intro choreography for the shelf.
+ *
+ * Each slug opens in turn; the last one is left open as the shelf's resting
+ * state. Hovering another title takes over, and releasing returns here.
+ */
+export const shelfIntro = ["open-call-sad-girls", "joven-chica"] as const;
 
 export async function getAllBooks(): Promise<Book[]> {
   return books;

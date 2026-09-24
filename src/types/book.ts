@@ -85,8 +85,17 @@ export type Book = {
   coverTone?: string;
   /** Cover proportion as width ÷ height. Trade paperback ≈ 0.66, poster ≈ 0.76. */
   coverAspect?: number;
-  /** How wide the cover stands on the shelf, as a CSS length. */
-  shelfWidth?: string;
+  /**
+   * Artwork of the book standing closed, seen edge-on. When present the shelf
+   * shows this instead of the cover face-out, and hovering reveals the cover.
+   */
+  spineImage?: ImageRef;
+  /** Spine proportion as width ÷ height — much narrower than a cover. */
+  spineAspect?: number;
+  /** How wide the spine stands on the shelf, in px before the shelf scales it. */
+  spineWidth?: number;
+  /** How wide the open cover stands, in px before the shelf scales it. */
+  shelfWidth?: number;
   /** Degrees the cover leans on the shelf. */
   shelfLean?: number;
   translations?: Partial<Record<Locale, BookTranslation>>;

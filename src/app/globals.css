@@ -40,12 +40,24 @@ body {
   text-wrap: pretty;
 }
 
+/*
+ * Reduced motion means less movement, not no feedback.
+ *
+ * This used to flatten every transition on the page to 0.01ms, which left
+ * interactive states snapping with no indication anything had happened.
+ * Looping animations and smooth-scrolling are the things that actually cause
+ * trouble, so those go; components drop their own movement (3D swings, slides)
+ * through `motion-reduce:` utilities and keep their fades.
+ */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation-iteration-count: 1 !important;
   }
 }

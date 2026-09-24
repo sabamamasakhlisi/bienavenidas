@@ -26,10 +26,12 @@ import type { BookView } from "./view";
 export function Reader({
   views,
   layout,
+  intro,
   shelfHint,
 }: {
   views: BookView[];
   layout: ShelfItem[];
+  intro: readonly string[];
   shelfHint: string;
 }) {
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -67,100 +69,131 @@ export function Reader({
     if (next?.book.slug !== hovered?.book.slug) setHovered(next);
   }
 
+  // The open call is a submissions notice, not a title to read and buy, so it
+  // stands on the shelf but gets no reading block.
+  const reading = views.filter(
+    (view) => view.book.slug !== "open-call-sad-girls",
+  );
+
   return (
     <>
       <Shelf
         layout={layout}
         books={titled}
+        intro={intro}
         hint={shelfHint}
         onSelect={open}
       />
 
       <div onPointerMove={trackPointer} onPointerLeave={() => setHovered(null)}>
-        {views.map((view, index) => {
+        {reading.map((view, index) => {
           const isOpen = openSlug === view.book.slug;
-          const quoteFirst = index % 2 === 0;
 
-          const quote = (
-            <button
-              type="button"
-              data-quote-slug={view.book.slug}
-              aria-expanded={isOpen}
-              aria-controls={isOpen ? `details-${view.book.slug}` : undefined}
-              onClick={() => setOpenSlug(isOpen ? null : view.book.slug)}
-              className="quote max-w-[46ch] cursor-pointer text-start text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px]"
-            >
-              {view.quote}
-            </button>
-          );
+          // Zig-zag: the first block sits left, the next right, alternating
+          // down the page. Keyed off display position rather than catalogue
+          // position, so hiding an entry doesn't break the rhythm.
+          const onLeft = index % 2 === 0;
 
-          // Rendered only when open, rather than hidden with CSS: the closed
-          // state is genuinely just the quote.
-          const details = !isOpen ? null : (
-            <div id={`details-${view.book.slug}`} className="contents">
-              <div
-                className="aspect-[2/3] w-full max-w-[220px] justify-self-center"
-                style={{
-                  aspectRatio: String(view.book.coverAspect ?? 0.66),
-                  containerType: "inline-size",
-                }}
-              >
-                <BookCover
-                  book={view.book}
-                  title={view.title}
-                  sizes="(max-width: 768px) 60vw, 220px"
-                />
-              </div>
-
-              <div className="flex max-w-[42ch] flex-col gap-3 text-[12px] leading-relaxed">
-                <h2 className="bask-font text-[15px] italic">
-                  {view.title}
-                  <span className="not-italic">, {view.author}</span>
-                </h2>
-
-                <p className="text-muted">{view.description}</p>
-
-                {view.credits && (
-                  <p className="whitespace-pre-line text-muted">
-                    {view.credits}
-                  </p>
-                )}
-
-                <div className="mt-2">
-                  {view.isOpenCall ? (
-                    <p className="bg-brand px-4 py-2 text-center text-[13px]">
-                      {t("openCall")}
-                    </p>
-                  ) : (
-                    <AddToCart
-                      book={view.book}
-                      title={view.title}
-                      price={view.price}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          );
+          // Mirrored rather than merely nudged across: a right-hand block runs
+          // its columns in reverse and sets its text to match, so the quote
+          // still hugs the outer edge and the two sides read as a pair.
+          // Logical properties (`text-start`/`text-end`) keep that true if an
+          // RTL locale is ever added.
+          // `items-*` does double duty: stacked on mobile it decides which
+          // edge the blocks line up against, but in a desktop row it becomes
+          // vertical alignment — so both sides are pinned to the top there, or
+          // the right-hand quote would sink to the bottom of its row.
+          const alignment = onLeft
+            ? "items-start text-start md:flex-row md:items-start"
+            : "items-end text-end md:flex-row-reverse md:items-start";
 
           return (
             <section
               key={view.book.slug}
               id={`book-${view.book.slug}`}
               tabIndex={-1}
-              className="grid scroll-mt-16 grid-cols-1 items-start gap-10 px-6 py-20 md:grid-cols-[1fr_auto_1fr] md:gap-12 md:px-16 md:py-28"
+              className="scroll-mt-16 px-6 py-20 md:px-16 md:py-28"
             >
-              {quoteFirst ? (
-                <>
-                  {quote}
-                  {details}
-                </>
-              ) : (
-                <>
-                  {details}
-                  {quote}
-                </>
-              )}
+              <div className="w-full">
+                <div
+                  className={`flex w-full flex-col gap-8 md:gap-12 ${alignment}`}
+                >
+                  <button
+                    type="button"
+                    data-quote-slug={view.book.slug}
+                    aria-expanded={isOpen}
+                    aria-controls={
+                      isOpen ? `details-${view.book.slug}` : undefined
+                    }
+                    onClick={() => setOpenSlug(isOpen ? null : view.book.slug)}
+                    // Buttons are centred by the UA stylesheet, which beats
+                    // the alignment inherited from the block — so state it.
+                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] ${
+                      onLeft ? "text-start" : "text-end"
+                    }`}
+                  >
+                    {view.quote}
+                  </button>
+
+                  {/* Opens alongside the quote, not beneath it — and only when
+                      open, because the closed state is genuinely just the
+                      quote. */}
+                  {isOpen && (
+                    <div
+                      id={`details-${view.book.slug}`}
+                      // Takes the width the quote doesn't, rather than sizing
+                      // to its own contents — otherwise the cover and colophon
+                      // are squeezed into a column barely wider than the cover.
+                      // `min-w-0` lets it shrink past its content when the
+                      // quote is long.
+                      className={`flex w-full min-w-0 flex-col gap-8 md:gap-12 ${alignment}`}
+                    >
+                      <div
+                        className="w-full max-w-[200px] shrink-0"
+                        style={{
+                          aspectRatio: String(view.book.coverAspect ?? 0.66),
+                          containerType: "inline-size",
+                        }}
+                      >
+                        <BookCover
+                          book={view.book}
+                          title={view.title}
+                          sizes="(max-width: 768px) 60vw, 200px"
+                        />
+                      </div>
+
+                      <div className="flex max-w-[42ch] flex-col gap-3 text-[12px] leading-relaxed">
+                        <h2 className="bask-font text-[15px] italic">
+                          {view.title}
+                          <span className="not-italic">, {view.author}</span>
+                        </h2>
+
+                        <p className="text-muted">{view.description}</p>
+
+                        {view.credits && (
+                          <p className="whitespace-pre-line text-muted">
+                            {view.credits}
+                          </p>
+                        )}
+
+                        <div className="mt-2 w-full">
+                          {view.isOpenCall ? (
+                            <p className="bg-brand px-4 py-2 text-center text-[13px]">
+                              {t("openCall")}
+                            </p>
+                          ) : (
+                            <AddToCart
+                              book={view.book}
+                              title={view.title}
+                              price={view.price}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </section>
           );
         })}

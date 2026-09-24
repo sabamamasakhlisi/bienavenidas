@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { defaultLocale, isLocale } from "@/i18n/config";
 
 import { Reader } from "./Reader";
-import { getAllBooks, shelfLayout } from "./catalog";
+import { getAllBooks, shelfIntro, shelfLayout } from "./catalog";
 import { attachCovers } from "./covers";
 import { toView } from "./view";
 
@@ -28,6 +28,7 @@ export async function CatalogPage() {
       <Reader
         views={books.map((book) => toView(book, locale))}
         layout={shelfLayout}
+        intro={shelfIntro}
         shelfHint={t("shelfHint")}
       />
     </>

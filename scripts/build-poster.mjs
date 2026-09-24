@@ -10,8 +10,8 @@ import { stat } from "node:fs/promises";
 
 import sharp from "sharp";
 
-const SOURCE = "public/poster_bienavenidas_low.jpg";
-const OUT = "public/poster_bienavenidas";
+const SOURCE = "public/poster_bienavenidas.jpg";
+const OUT = "public/poster_bienavenidas_lowres";
 
 /** Rendered width on the page. Panning shows it 1:1, so this is the real size. */
 const WIDTH = 2966;
