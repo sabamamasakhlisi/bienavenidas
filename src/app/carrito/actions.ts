@@ -9,6 +9,7 @@ import { getStock } from "@/features/checkout/inventory";
 import { MAX_QUANTITY } from "@/features/checkout/limits";
 import {
   createCheckoutSession,
+  getLinkedPrices,
   isCheckoutConfigured,
   type PricedItem,
 } from "@/features/checkout/stripe";
@@ -97,6 +98,28 @@ export async function startCheckout(
       .filter((item) => (stock?.get(item.slug) ?? Infinity) < item.quantity)
       .map((item) => item.slug);
     if (short.length > 0) return { ok: false, reason: "outOfStock", slugs: short };
+
+    // Where a book is linked to a Stripe price, charge that price: Stripe's
+    // catalogue is the one you edit. The site's price stays as the fallback.
+    const linked = await getLinkedPrices(items.map((item) => item.slug));
+    for (const item of items) {
+      const price = linked.get(item.slug);
+      if (!price) continue;
+      if (price.amount !== item.amount || price.currency !== item.currency) {
+        console.warn(
+          `Stripe price for ${item.slug} (${price.amount} ${price.currency}) ` +
+            `differs from the site (${item.amount} ${item.currency})`,
+        );
+      }
+      Object.assign(item, {
+        stripePriceId: price.id,
+        amount: price.amount,
+        currency: price.currency,
+      });
+    }
+    if (new Set(items.map((item) => item.currency)).size !== 1) {
+      return { ok: false, reason: "unavailable", slugs: [] };
+    }
 
     url = await createCheckoutSession({
       items,

@@ -31,6 +31,17 @@ only divided by 100 in `formatMoney`, for display.
 
 See `.env.example`.
 
+## Linking books to the Stripe product catalogue
+
+A book is linked to a Stripe product when one of that product's prices has the
+book's slug (the last part of `/libros/<slug>`) as its **lookup key**. Checkout
+then charges that Stripe price instead of the site's, and orders read the slug
+back from it. Lookup keys are yours, not Stripe's, so the same link works in
+test and live mode. Unlinked books are still charged from `catalog.ts`.
+
+Keep the site's price equal to the Stripe one: the site still shows its own,
+and a mismatch is logged at checkout.
+
 ## Running the shop in Supabase
 
 - Apply `supabase/migrations/` (SQL editor, or `supabase db push`), then set
