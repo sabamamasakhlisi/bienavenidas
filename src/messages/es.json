@@ -102,6 +102,21 @@
       "tiktok": "TikTok"
     }
   },
+  "newsletter": {
+    "open": "Apúntate a nuestra newsletter",
+    "heading": "Apúntate a nuestra newsletter\npara estar al día de todos nuestros\nlanzamientos\neventos\ndescuentos\ny pensamientos intrusivos.",
+    "placeholder": "email",
+    "submit": "suscríbeme",
+    "sending": "un momento…",
+    "success": "¡Listo! Ya estás en la lista.",
+    "close": "Cerrar",
+    "smallPrint": "Al suscribirte a la newsletter, aceptas recibir nuestras newsletter y la política de privacidad.\nPuedes darte de baja en cualquier momento a través del enlace que encontrarás en el mail.",
+    "errors": {
+      "email": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
+      "throttled": "Has hecho varios intentos seguidos. Espera unos minutos y vuelve a probar.",
+      "failed": "No hemos podido apuntarte. Inténtalo de nuevo en un momento."
+    }
+  },
   "notFound": {
     "title": "Página no encontrada",
     "body": "La página que buscas no existe o cambió de lugar.",

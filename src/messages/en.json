@@ -102,6 +102,21 @@
       "tiktok": "TikTok"
     }
   },
+  "newsletter": {
+    "open": "Sign up to our newsletter",
+    "heading": "Sign up to our newsletter\nto keep up with all our\nreleases\nevents\ndiscounts\nand intrusive thoughts.",
+    "placeholder": "email",
+    "submit": "subscribe me",
+    "sending": "one moment…",
+    "success": "You're on the list.",
+    "close": "Close",
+    "smallPrint": "By subscribing you agree to receive our newsletter and to the privacy policy.\nYou can unsubscribe at any time through the link in the email.",
+    "errors": {
+      "email": "That address doesn't look right. Check it and try again.",
+      "throttled": "That's a few sign-ups in a row. Give it a few minutes and try again.",
+      "failed": "We couldn't sign you up. Please try again in a moment."
+    }
+  },
   "notFound": {
     "title": "Page not found",
     "body": "The page you're looking for doesn't exist or has moved.",

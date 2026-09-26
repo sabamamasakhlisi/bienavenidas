@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { Logo } from "@/components/layout/Logo";
+import { NewsletterModal } from "@/features/newsletter/NewsletterModal";
 
 const EMAIL = "hola@bienavenidas.com";
 
@@ -38,7 +39,9 @@ export default async function ContactoPage() {
 
         <a
           href={`mailto:${EMAIL}`}
-          className="bask-font mt-6 text-[21px] underline-offset-4 hover:underline"
+          // Underlined in the accent at rest, as the design draws it — the
+          // pink is what marks these as the page's live text.
+          className="bask-font mt-6 text-[21px] underline decoration-[#F5C8E8] decoration-2 underline-offset-[6px] transition-opacity hover:opacity-70"
         >
           {EMAIL}
         </a>
@@ -50,13 +53,15 @@ export default async function ContactoPage() {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[15px] underline-offset-4 hover:underline"
+                className="text-[15px] underline decoration-[#F5C8E8] decoration-2 underline-offset-[6px] transition-opacity hover:opacity-70"
               >
                 {t(`social.${key}`)}
               </a>
             </li>
           ))}
         </ul>
+
+        <NewsletterModal />
       </div>
     </section>
   );
