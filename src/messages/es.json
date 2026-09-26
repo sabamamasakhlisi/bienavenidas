@@ -11,7 +11,8 @@
   "nav": {
     "libros": "Libros",
     "bienvenidas": "Bien*venidas",
-    "contacto": "Contacto"
+    "contacto": "Contacto",
+    "cart": "Cesta"
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Editorial independiente",
@@ -51,6 +52,36 @@
       "preorder": "Reserva anticipada",
       "out_of_print": "Descatalogado"
     }
+  },
+  "cart": {
+    "title": "Cesta",
+    "link": "Cesta, {count, plural, =0 {vacía} one {# libro} other {# libros}}",
+    "empty": "Tu cesta está vacía.",
+    "browse": "Ver libros",
+    "quantity": "Cantidad de {title}",
+    "decrease": "Quitar un ejemplar de {title}",
+    "increase": "Añadir un ejemplar de {title}",
+    "remove": "Quitar",
+    "removeLabel": "Quitar {title} de la cesta",
+    "subtotal": "Subtotal",
+    "shippingNote": "Envío a España y la UE. Pago seguro con Stripe.",
+    "checkout": "Pagar",
+    "redirecting": "Abriendo el pago…",
+    "errors": {
+      "notConfigured": "El pago en línea aún no está activo. Escríbenos a hola@bienavenidas.com para hacer tu pedido.",
+      "empty": "Tu cesta está vacía.",
+      "unavailable": "Algún título de tu cesta ya no está a la venta. Quítalo y vuelve a intentarlo.",
+      "outOfStock": "No quedan suficientes ejemplares de algún título. Reduce la cantidad o quítalo.",
+      "failed": "No pudimos abrir el pago. Inténtalo de nuevo en un momento."
+    },
+    "unavailableLine": "No disponible",
+    "outOfStockLine": "Sin ejemplares suficientes",
+    "thanksTitle": "¡Gracias!",
+    "thanksBody": "Hemos recibido tu pedido. Te llegará un recibo por correo{email, select, none {} other { a {email}}}.",
+    "thanksTotal": "Total pagado: {total}",
+    "pendingBody": "Tu pago se está procesando. Te escribiremos en cuanto se confirme.",
+    "unknownBody": "Si has completado el pago, te llegará un recibo por correo.",
+    "backToBooks": "Volver a los libros"
   },
   "bienvenidas": {
     "title": "Bien*venidas",

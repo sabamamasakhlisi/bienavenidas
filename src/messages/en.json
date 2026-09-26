@@ -11,7 +11,8 @@
   "nav": {
     "libros": "Books",
     "bienvenidas": "Bien*venidas",
-    "contacto": "Contact"
+    "contacto": "Contact",
+    "cart": "Cart"
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Independent press",
@@ -51,6 +52,36 @@
       "preorder": "Pre-order",
       "out_of_print": "Out of print"
     }
+  },
+  "cart": {
+    "title": "Cart",
+    "link": "Cart, {count, plural, =0 {empty} one {# book} other {# books}}",
+    "empty": "Your cart is empty.",
+    "browse": "Browse books",
+    "quantity": "Quantity of {title}",
+    "decrease": "Remove one copy of {title}",
+    "increase": "Add one copy of {title}",
+    "remove": "Remove",
+    "removeLabel": "Remove {title} from the cart",
+    "subtotal": "Subtotal",
+    "shippingNote": "Shipping to Spain and the EU. Secure payment with Stripe.",
+    "checkout": "Checkout",
+    "redirecting": "Opening checkout…",
+    "errors": {
+      "notConfigured": "Online payment isn't live yet. Write to hola@bienavenidas.com to place your order.",
+      "empty": "Your cart is empty.",
+      "unavailable": "A title in your cart is no longer for sale. Remove it and try again.",
+      "outOfStock": "There aren't enough copies left of a title. Lower the quantity or remove it.",
+      "failed": "We couldn't open checkout. Please try again in a moment."
+    },
+    "unavailableLine": "Unavailable",
+    "outOfStockLine": "Not enough copies",
+    "thanksTitle": "Thank you!",
+    "thanksBody": "We've received your order. A receipt is on its way{email, select, none {} other { to {email}}}.",
+    "thanksTotal": "Total paid: {total}",
+    "pendingBody": "Your payment is processing. We'll write as soon as it's confirmed.",
+    "unknownBody": "If you completed payment, a receipt is on its way by email.",
+    "backToBooks": "Back to books"
   },
   "bienvenidas": {
     "title": "Bien*venidas",
