@@ -26,7 +26,7 @@ only divided by 100 in `formatMoney`, for display.
 | --- | --- |
 | `STRIPE_SECRET_KEY` | Creating and reading Checkout sessions. Without it the cart works and checkout says payment isn't live yet. |
 | `STRIPE_WEBHOOK_SECRET` | Verifying the webhook. Register `https://<site>/api/stripe/webhook` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Stock checks and recording orders. Without them checkout skips both. |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Stock, prices and recording orders. Without them checkout skips the stock check and falls back to catalogue prices. Projects older than 2025 name the key `SUPABASE_SERVICE_ROLE_KEY`; either is read. |
 | `SITE_URL` | Optional. Base URL for Stripe's return links; defaults to the request's host. |
 
 See `.env.example`.

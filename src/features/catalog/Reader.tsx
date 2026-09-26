@@ -4,6 +4,9 @@ import { useRef, useState } from "react";
 
 import { useTranslations } from "next-intl";
 
+import type { CheckoutAction } from "@/features/checkout/CartView";
+import { useCart } from "@/features/checkout/cart";
+
 import { AddToCart } from "./AddToCart";
 import { BookCover } from "./BookCover";
 import { FadedText } from "./FadedText";
@@ -40,13 +43,32 @@ export function Reader({
   layout,
   intro,
   shelfHint,
+  checkout,
 }: {
   views: BookView[];
   layout: ShelfItem[];
   intro: readonly string[];
   shelfHint: string;
+  checkout: CheckoutAction;
 }) {
-  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const { lines } = useCart();
+
+  /**
+   * Which entry stands open.
+   *
+   * `undefined` means nobody has chosen yet — which is not the same as having
+   * chosen to close everything, and keeping the two apart is what lets the
+   * cart decide the opening state without ever overriding a later click. A
+   * reader who arrives with something in the cart is mid-purchase, so that
+   * entry opens: it is the one carrying the price plate and, now, the way to
+   * pay from where they already are.
+   */
+  const inCart =
+    views.find((view) => lines.some((line) => line.slug === view.book.slug))
+      ?.book.slug ?? null;
+
+  const [chosen, setChosen] = useState<string | null | undefined>(undefined);
+  const openSlug = chosen === undefined ? inCart : chosen;
   const [hovered, setHovered] = useState<BookView | null>(null);
   const followerRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("libros");
@@ -56,7 +78,7 @@ export function Reader({
   );
 
   function open(slug: string) {
-    setOpenSlug(slug);
+    setChosen(slug);
     const target = document.getElementById(`book-${slug}`);
     if (!target) return;
     target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -131,11 +153,18 @@ export function Reader({
             </p>
           ) : view.isComingSoon ? (
             <NotifyLink title={view.title} />
+          ) : view.isSoldOut ? (
+            // Nothing to add, so nothing that looks like it can be added: the
+            // last place to stop someone is before the cart, not at the till.
+            <p className="bg-brand px-4 py-2 text-center text-[13px] opacity-70">
+              {view.soldOutLabel}
+            </p>
           ) : (
             <AddToCart
               book={view.book}
               title={view.title}
               price={view.price}
+              checkout={checkout}
             />
           );
 
@@ -214,7 +243,7 @@ export function Reader({
                     aria-controls={
                       isOpen ? `details-${view.book.slug}` : undefined
                     }
-                    onClick={() => setOpenSlug(isOpen ? null : view.book.slug)}
+                    onClick={() => setChosen(isOpen ? null : view.book.slug)}
                     // Buttons are centred by the UA stylesheet, which beats
                     // the alignment inherited from the block — so state it.
                     className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] ${

@@ -14,6 +14,7 @@ import {
   localizeBook,
 } from "@/features/catalog/catalog";
 import { attachCover } from "@/features/catalog/covers";
+import { withLiveShopBook } from "@/features/checkout/live";
 import { defaultLocale, isLocale } from "@/i18n/config";
 
 type Props = {
@@ -48,7 +49,7 @@ export default async function BookPage({ params }: Props) {
     notFound();
   }
 
-  const book = attachCover(found);
+  const book = await withLiveShopBook(attachCover(found));
 
   const locale = await resolveLocale();
   const { title, subtitle, description } = localizeBook(book, locale);
@@ -57,6 +58,8 @@ export default async function BookPage({ params }: Props) {
 
   const price = formatPrice(book.price, locale);
   const comingSoon = book.stock === "coming_soon";
+  const soldOut =
+    book.stock === "out_of_stock" || book.stock === "out_of_print";
 
   return (
     <Container className="py-20 md:py-28">
@@ -111,6 +114,8 @@ export default async function BookPage({ params }: Props) {
           <p className="mb-3 text-lg">{t("stock.coming_soon")}</p>
           <NotifyLink title={title} />
         </div>
+      ) : soldOut ? (
+        <p className="mt-10 text-lg">{t(`stock.${book.stock}`)}</p>
       ) : (
         <p className="mt-10 text-lg">
           {price}{" "}

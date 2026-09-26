@@ -19,9 +19,16 @@ export type BookView = {
   price: string;
   isOpenCall: boolean;
   isComingSoon: boolean;
+  isSoldOut: boolean;
+  /** Pre-resolved, because `Reader` has only the `libros` namespace. */
+  soldOutLabel: string;
 };
 
-export function toView(book: Book, locale: Locale): BookView {
+export function toView(
+  book: Book,
+  locale: Locale,
+  soldOutLabel: string,
+): BookView {
   const { title, description, quote } = localizeBook(book, locale);
 
   return {
@@ -36,5 +43,8 @@ export function toView(book: Book, locale: Locale): BookView {
     isOpenCall: book.price.amount === 0,
     // Announced but unfinished: the entry takes an interest, not an order.
     isComingSoon: book.stock === "coming_soon",
+    // Live, from the shop's own count — not the catalogue's static status.
+    isSoldOut: book.stock === "out_of_stock" || book.stock === "out_of_print",
+    soldOutLabel,
   };
 }

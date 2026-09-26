@@ -6,42 +6,191 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * Server only: this uses the service-role key, which bypasses row-level
  * security. Never import it from a client component.
  *
- * Without `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` stock isn't checked
- * and orders aren't recorded, so the shop still runs locally without it.
+ * Without `SUPABASE_URL` and a secret key, stock isn't checked and orders
+ * aren't recorded, so the shop still runs locally without it.
  */
 
 let client: SupabaseClient | null = null;
 
+/**
+ * The secret key, under either name Supabase has given it.
+ *
+ * Projects created from 2025 issue `sb_secret_…` keys and the dashboard calls
+ * that the secret key; older ones issue a `service_role` JWT. Both bypass row
+ * level security and both belong only on the server, so either will do — but
+ * only one of them is ever set, and reading for just one name is a silent
+ * misconfiguration: `isInventoryConfigured()` returns false, every stock check
+ * is skipped, and the shop sells happily from an empty shelf.
+ */
+function secretKey() {
+  return (
+    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
+
 export function isInventoryConfigured() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(process.env.SUPABASE_URL && secretKey());
+}
+
+/**
+ * Where Supabase answers get written down.
+ *
+ * Checkout logs in every environment: it runs once per order, and when someone
+ * says they were charged the wrong price or sold a book that wasn't on the
+ * shelf, this is the only record of what the shop actually knew at the time.
+ * Page renders log in development only — they fire on every request and would
+ * bury the lines that matter.
+ */
+function log(always: boolean, message: string) {
+  if (always || process.env.NODE_ENV !== "production") {
+    console.log(`[supabase] ${message}`);
+  }
+}
+
+/** Minor units as money, for a log line. `null` reads as what it means. */
+function money(cents: number | null) {
+  return cents === null ? "unpriced" : `€${(cents / 100).toFixed(2)}`;
 }
 
 function supabase() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set");
+  const key = secretKey();
+  if (!url || !key) {
+    throw new Error(
+      "SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) are not set",
+    );
+  }
   client ??= createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   return client;
 }
 
-/**
- * Copies on hand for each slug. A slug missing from the result isn't
- * stock-tracked. Returns null when Supabase isn't configured.
- */
-export async function getStock(
-  slugs: string[],
-): Promise<Map<string, number> | null> {
-  if (!isInventoryConfigured()) return null;
+/** What the shop's own record says about one title. */
+export type InventoryRow = {
+  /** Copies on hand. */
+  quantity: number;
+  /**
+   * Unit price in minor units, or null where the title has not been priced
+   * here. Never zero-as-free: a row priced 0 is one nobody has filled in, and
+   * the catalogue's own price stands until it is.
+   *
+   * Read from `price_cents`, which the database derives from the euros in
+   * `price` — that is the column a person edits, and this is the one that gets
+   * charged. Reading the derived column rather than converting here is what
+   * keeps the two from ever disagreeing.
+   */
+  price: number | null;
+};
 
+/**
+ * Stock and price for each slug. A slug missing from the result isn't tracked
+ * here at all. Returns null when Supabase isn't configured — which callers
+ * must treat as "unknown", never as "none in stock".
+ */
+export async function getInventory(
+  slugs: string[],
+  { label, always = false }: { label: string; always?: boolean },
+): Promise<Map<string, InventoryRow> | null> {
+  const wanted = slugs.filter(Boolean);
+
+  if (!isInventoryConfigured()) {
+    // Loud, and not behind the `always` flag. This is the state that looks
+    // exactly like a working shop and isn't one: no stock is being checked
+    // and every price is coming from the catalogue.
+    console.warn(
+      `[supabase] ${label}: NOT CONFIGURED — stock unchecked, prices from the catalogue. Set SUPABASE_URL and SUPABASE_SECRET_KEY.`,
+    );
+    return null;
+  }
+
+  log(always, `${label}: asking for ${wanted.length} — ${wanted.join(", ")}`);
+
+  const startedAt = Date.now();
   const { data, error } = await supabase()
     .from("stock")
-    .select("slug, quantity")
-    .in("slug", slugs);
-  if (error) throw error;
+    .select("slug, quantity, price_cents")
+    .in("slug", wanted);
 
-  return new Map(data.map((row) => [row.slug as string, row.quantity as number]));
+  if (error) {
+    console.error(`[supabase] ${label}: query failed`, {
+      wanted,
+      code: error.code,
+      message: error.message,
+      hint: error.hint,
+    });
+    throw error;
+  }
+
+  const rows = new Map(
+    data.map((row) => [
+      row.slug as string,
+      {
+        quantity: row.quantity as number,
+        price:
+          typeof row.price_cents === "number" && row.price_cents > 0
+            ? row.price_cents
+            : null,
+      } satisfies InventoryRow,
+    ]),
+  );
+
+  const summary =
+    [...rows]
+      .map(([slug, row]) => `${slug} ×${row.quantity} @ ${money(row.price)}`)
+      .join(" · ") || "(no rows — nothing here is stock-tracked)";
+
+  log(
+    always,
+    `${label}: got ${rows.size}/${wanted.length} in ${Date.now() - startedAt}ms — ${summary}`,
+  );
+
+  // A slug the shop has never heard of sells freely and at its catalogue
+  // price, which is correct but worth seeing while a catalogue is being set up.
+  const untracked = wanted.filter((slug) => !rows.has(slug));
+  if (untracked.length > 0) {
+    log(always, `${label}: no row for ${untracked.join(", ")} — not tracked`);
+  }
+
+  return rows;
+}
+
+/**
+ * A single round trip that proves the whole path: the key is present, the
+ * client builds, the request is authorised and the table answers. Used by the
+ * development-only health route, so a misconfiguration shows up as a plain
+ * answer rather than as stock checks quietly not happening.
+ */
+export async function checkInventoryConnection(): Promise<
+  | { ok: true; rows: { slug: string; quantity: number; price: number | null }[] }
+  | { ok: false; reason: string }
+> {
+  if (!isInventoryConfigured()) {
+    return {
+      ok: false,
+      reason:
+        "SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) are not both set",
+    };
+  }
+
+  try {
+    const { data, error } = await supabase()
+      .from("stock")
+      .select("slug, quantity, price_cents")
+      .order("slug");
+    if (error) throw error;
+
+    return {
+      ok: true,
+      rows: data.map((row) => ({
+        slug: row.slug as string,
+        quantity: row.quantity as number,
+        price: (row.price_cents as number | null) ?? null,
+      })),
+    };
+  } catch (error) {
+    return { ok: false, reason: (error as Error).message };
+  }
 }
 
 export type OrderItem = {

@@ -5,14 +5,17 @@ import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 
 import { getBookBySlug, localizeBook } from "@/features/catalog/catalog";
-import { getStock } from "@/features/checkout/inventory";
+import {
+  getInventory,
+  type InventoryRow,
+} from "@/features/checkout/inventory";
 import { MAX_QUANTITY } from "@/features/checkout/limits";
 import {
   createCheckoutSession,
   isCheckoutConfigured,
   type PricedItem,
 } from "@/features/checkout/stripe";
-import { defaultLocale, isLocale } from "@/i18n/config";
+import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 
 export type CheckoutRequest = { slug: string; quantity: number }[];
 
@@ -33,24 +36,45 @@ export type CheckoutResult =
 /** Titles that are listed but not sold: nothing to charge, or nothing to ship. */
 const UNBUYABLE = new Set(["out_of_stock", "out_of_print", "coming_soon"]);
 
+/** What a cart is worth, and what is wrong with it. */
+type Priced = {
+  items: PricedItem[];
+  /** Listed but not sellable: withdrawn, unpriced, or a bad quantity. */
+  unavailable: string[];
+  /** Sellable, but not in the number asked for. */
+  short: string[];
+};
+
 /**
- * Turns the browser's cart into a Stripe Checkout session.
+ * Prices a cart and says what can't be bought.
  *
  * This is where the app joins `catalog` and `checkout`, so neither feature has
  * to import the other. Only slugs and quantities are trusted from the client;
  * every price and name is looked up again here.
+ *
+ * Price comes from the shop's own record in Supabase where that title has one,
+ * and from the catalogue where it doesn't — so a price can be changed without
+ * a deploy, and a title nobody has priced there still sells at its catalogue
+ * price rather than for nothing.
+ *
+ * One function serves both the check the cart page runs on load and the one
+ * that guards the payment, so the two can never drift apart. The second is the
+ * one that matters, and it is the same code.
  */
-export async function startCheckout(
+async function priceCart(
   request: CheckoutRequest,
-): Promise<CheckoutResult> {
-  if (!isCheckoutConfigured()) return { ok: false, reason: "notConfigured" };
-
-  if (!Array.isArray(request) || request.length === 0 || request.length > 50) {
-    return { ok: false, reason: "empty" };
-  }
-
-  const rawLocale = await getLocale();
-  const locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
+  locale: Locale,
+  { log }: { log: boolean },
+): Promise<Priced> {
+  // One round trip for every line, before pricing: the same rows answer both
+  // "what does it cost" and "is there one left".
+  const inventory: Map<string, InventoryRow> | null = await getInventory(
+    request.map((line) => (typeof line?.slug === "string" ? line.slug : "")),
+    // Logged in production for a real checkout: one line per order, and the
+    // only record of what the shop knew when it took the money. The cart
+    // page's own check is routine, and stays quiet outside development.
+    { label: log ? "checkout" : "cart check", always: log },
+  );
 
   const items: PricedItem[] = [];
   const unavailable: string[] = [];
@@ -59,10 +83,24 @@ export async function startCheckout(
     const slug = typeof line?.slug === "string" ? line.slug : "";
     const quantity = line?.quantity;
     const book = slug ? await getBookBySlug(slug) : undefined;
+    const live = inventory?.get(slug)?.price ?? null;
+    const amount = live ?? book?.price.amount ?? 0;
+
+    if (book && log) {
+      console.log(
+        `[checkout] ${slug}: charging ${amount} (${
+          live === null ? "catalogue — no price in Supabase" : "from Supabase"
+        }${
+          live !== null && live !== book.price.amount
+            ? `, catalogue says ${book.price.amount}`
+            : ""
+        })`,
+      );
+    }
 
     if (
       !book ||
-      book.price.amount <= 0 ||
+      amount <= 0 ||
       UNBUYABLE.has(book.stock) ||
       !Number.isInteger(quantity) ||
       quantity < 1 ||
@@ -76,11 +114,93 @@ export async function startCheckout(
       slug: book.slug,
       isbn: book.isbn,
       name: localizeBook(book, locale).title,
-      amount: book.price.amount,
+      amount,
       currency: book.price.currency,
       quantity,
     });
   }
+
+  // Stock is checked here and decremented only once Stripe confirms payment
+  // (see the webhook). A title with no row isn't tracked and sells freely; a
+  // null map means Supabase isn't configured, which is "unknown", not "none".
+  const short: string[] = [];
+
+  for (const item of items) {
+    const onHand = inventory?.get(item.slug)?.quantity ?? null;
+    const enough = onHand === null || onHand >= item.quantity;
+
+    if (log) {
+      console.log(
+        `[checkout] ${item.slug}: wants ${item.quantity}, ${
+          onHand === null ? "not stock-tracked" : `${onHand} on hand`
+        } → ${enough ? "ok" : "SHORT"}`,
+      );
+    }
+
+    if (!enough) short.push(item.slug);
+  }
+
+  return { items, unavailable, short };
+}
+
+/**
+ * What is wrong with the cart as it stands, so the page can say so before
+ * anyone reaches for the payment button.
+ *
+ * Advisory only, and nothing here is trusted: `startCheckout` runs the same
+ * checks again against fresh rows, because the last copy can sell between the
+ * two. This exists to save a pointless trip to Stripe, not to decide anything.
+ */
+export async function checkCart(request: CheckoutRequest): Promise<{
+  unavailable: string[];
+  outOfStock: string[];
+}> {
+  const nothingWrong = { unavailable: [], outOfStock: [] };
+
+  if (!Array.isArray(request) || request.length === 0 || request.length > 50) {
+    return nothingWrong;
+  }
+
+  const rawLocale = await getLocale();
+  const locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
+
+  try {
+    const { unavailable, short } = await priceCart(request, locale, {
+      log: false,
+    });
+    return { unavailable, outOfStock: short };
+  } catch (error) {
+    // The page still works without this, and the payment guard is the real
+    // one — so a lookup failure here must not block a cart that is fine.
+    console.error("Cart availability check failed", error);
+    return nothingWrong;
+  }
+}
+
+/** Turns the browser's cart into a Stripe Checkout session. */
+export async function startCheckout(
+  request: CheckoutRequest,
+): Promise<CheckoutResult> {
+  if (!isCheckoutConfigured()) return { ok: false, reason: "notConfigured" };
+
+  if (!Array.isArray(request) || request.length === 0 || request.length > 50) {
+    return { ok: false, reason: "empty" };
+  }
+
+  const rawLocale = await getLocale();
+  const locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
+
+  let priced: Priced;
+  try {
+    priced = await priceCart(request, locale, { log: true });
+  } catch (error) {
+    // Failing open here would price the cart from the catalogue and skip the
+    // stock check — the two things this lookup exists to prevent.
+    console.error("Supabase inventory lookup failed", error);
+    return { ok: false, reason: "failed" };
+  }
+
+  const { items, unavailable, short } = priced;
 
   // Stripe charges a session in one currency.
   const currencies = new Set(items.map((item) => item.currency));
@@ -88,16 +208,13 @@ export async function startCheckout(
     return { ok: false, reason: "unavailable", slugs: unavailable };
   }
 
+  if (short.length > 0) {
+    console.warn(`[checkout] refused, out of stock: ${short.join(", ")}`);
+    return { ok: false, reason: "outOfStock", slugs: short };
+  }
+
   let url: string;
   try {
-    // Stock is checked here and decremented only once Stripe confirms payment
-    // (see the webhook). Titles without a stock row aren't tracked.
-    const stock = await getStock(items.map((item) => item.slug));
-    const short = items
-      .filter((item) => (stock?.get(item.slug) ?? Infinity) < item.quantity)
-      .map((item) => item.slug);
-    if (short.length > 0) return { ok: false, reason: "outOfStock", slugs: short };
-
     url = await createCheckoutSession({
       items,
       locale,

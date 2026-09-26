@@ -22,6 +22,14 @@ const GAP = 5;
 /** An open book never takes more than this share of the shelf. */
 const MAX_OPEN_SHARE = 0.35;
 
+/**
+ * And no more than this share of the screen on a phone. Measured against what
+ * can be seen rather than the row's full length, which on a scrolling shelf is
+ * longer than the window — without it the widest covers open to most of a
+ * phone screen and read as a page, not a book on a shelf.
+ */
+const COMPACT_OPEN_SHARE = 0.68;
+
 /** Below this the shelf scrolls instead of squeezing. Matches Tailwind's `md`. */
 const COMPACT_QUERY = "(max-width: 767px)";
 
@@ -38,16 +46,19 @@ const OPEN_SCROLL_DELAY = 350;
 /** How many things stand on the shelf at once. */
 const MAX_ITEMS = 10;
 
+/** And on a phone, where the scenery crowds the titles out. */
+const COMPACT_MAX_ITEMS = 5;
+
 /**
- * Trims the shelf to `MAX_ITEMS`, keeping every catalogued title and filling
+ * Trims the shelf to `max` items, keeping every catalogued title and filling
  * the rest with scenery in the order it was authored. Books are kept first so
  * a long run of spines can never push a real title off the shelf.
  */
-function trimLayout(layout: ShelfItem[]) {
-  if (layout.length <= MAX_ITEMS) return layout;
+function trimLayout(layout: ShelfItem[], max: number) {
+  if (layout.length <= max) return layout;
 
   const bookCount = layout.filter((item) => item.kind === "book").length;
-  const spineBudget = Math.max(0, MAX_ITEMS - bookCount);
+  const spineBudget = Math.max(0, max - bookCount);
 
   const spinePositions = layout.reduce<number[]>((acc, item, index) => {
     if (item.kind === "spine") acc.push(index);
@@ -65,6 +76,86 @@ function trimLayout(layout: ShelfItem[]) {
   );
 
   return layout.filter((item, index) => item.kind === "book" || keep.has(index));
+}
+
+/**
+ * Perceived distance between two hex colours — 0 for a match, ~255 for
+ * opposites. Weighted the way `BookCover` weights luminance, because the eye
+ * reads a difference in green far more readily than the same step in blue.
+ */
+function colourDistance(a: string, b: string) {
+  const channels = (hex: string) => {
+    const value = hex.replace("#", "");
+    return [
+      parseInt(value.slice(0, 2), 16),
+      parseInt(value.slice(2, 4), 16),
+      parseInt(value.slice(4, 6), 16),
+    ];
+  };
+
+  const [r1, g1, b1] = channels(a);
+  const [r2, g2, b2] = channels(b);
+
+  return Math.sqrt(
+    0.299 * (r1 - r2) ** 2 + 0.587 * (g1 - g2) ** 2 + 0.114 * (b1 - b2) ** 2,
+  );
+}
+
+/** Closer than this and two spines read as a repeat rather than two choices. */
+const COLOUR_APART = 25;
+
+/**
+ * The phone's shelf: every title, plus the few pieces of scenery that look
+ * least like anything already standing there.
+ *
+ * Sampling evenly is right for a long row, where a near-repeat is lost among
+ * thirty spines. On a row of five it is the first thing you see — and the
+ * books' own spines count, so the pale pink scenery beside Open Call's pale
+ * pink spine reads as one colour used twice. So each pick is the candidate
+ * furthest from everything already on the shelf. Where nothing is far enough
+ * the shelf simply comes up a spine short, which looks better than the repeat.
+ */
+function pickCompact(
+  shelf: ShelfItem[],
+  reserved: string[],
+  max: number,
+): Set<ShelfItem> {
+  const titles = shelf.filter((item) => item.kind === "book");
+  const spines = shelf.filter(
+    (item): item is Extract<ShelfItem, { kind: "spine" }> =>
+      item.kind === "spine",
+  );
+
+  const budget = Math.max(0, max - titles.length);
+  const taken = [...reserved];
+  const keep = new Set<ShelfItem>();
+
+  for (let n = 0; n < budget; n += 1) {
+    let best: ShelfItem | undefined;
+    let bestApart = -1;
+
+    for (const candidate of spines) {
+      if (keep.has(candidate)) continue;
+
+      const apart = taken.reduce(
+        (nearest, colour) =>
+          Math.min(nearest, colourDistance(colour, candidate.color)),
+        Infinity,
+      );
+
+      if (apart > bestApart) {
+        bestApart = apart;
+        best = candidate;
+      }
+    }
+
+    if (!best || bestApart < COLOUR_APART) break;
+
+    keep.add(best);
+    taken.push((best as Extract<ShelfItem, { kind: "spine" }>).color);
+  }
+
+  return new Set([...titles, ...keep]);
 }
 
 /** The width a book occupies while closed. */
@@ -229,7 +320,23 @@ export function Shelf({
 
   const openSlug = hoveredSlug ?? tappedSlug ?? focusedSlug ?? restingSlug;
 
-  const shelf = trimLayout(layout);
+  const shelf = trimLayout(layout, MAX_ITEMS);
+
+  // Colours the shelf is already committed to: every title's own spine, except
+  // where artwork stands in for one. Scenery is then chosen to avoid them.
+  const reserved = shelf.flatMap((item) => {
+    if (item.kind !== "book") return [];
+    const { book } = books[item.slug];
+    return book.spineImage ? [] : [book.spine?.color ?? "#4d3738"];
+  });
+
+  // The phone's shorter shelf. Trimmed from the row that is actually rendered,
+  // not from the full layout: sampled independently the two passes pick
+  // different spines, and a spine the phone wants but the row never drew
+  // simply goes missing. Doing it in CSS rather than in state also keeps the
+  // server render and the first client paint identical — measuring first and
+  // then dropping half the row would show the full shelf for a frame, then snap.
+  const compactShelf = pickCompact(shelf, reserved, COMPACT_MAX_ITEMS);
 
   // Natural widths, i.e. the shelf at rest with nothing open.
   const natural = shelf.map((item) =>
@@ -257,7 +364,7 @@ export function Shelf({
   // visible width — there is more shelf either side of it.
   const openWidthOf = (book: Book) => {
     const byWidth = compact
-      ? (available ?? content) - GAP * 2
+      ? (available ?? content) * COMPACT_OPEN_SHARE
       : (content - gaps) * MAX_OPEN_SHARE;
     const byHeight = rowHeight
       ? rowHeight * (book.coverAspect ?? 0.66)
@@ -333,7 +440,9 @@ export function Shelf({
                   transform: `rotate(${item.lean ?? 0}deg)`,
                   transitionDuration: "700ms",
                 }}
-                className="shrink-0 origin-bottom transition-[width] ease-out"
+                className={`shrink-0 origin-bottom transition-[width] ease-out ${
+                  compactShelf.has(item) ? "" : "hidden md:block"
+                }`}
               />
             );
           }

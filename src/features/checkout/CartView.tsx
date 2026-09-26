@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
 
@@ -23,19 +23,78 @@ export type CheckoutAction = (
   | { ok: false; reason: CheckoutFailure; slugs?: string[] }
 >;
 
+/** The same verdict, asked for early and without the trip to Stripe. */
+export type CheckCartAction = (
+  request: { slug: string; quantity: number }[],
+) => Promise<{ unavailable: string[]; outOfStock: string[] }>;
+
 /**
  * The cart page body.
  *
  * `checkout` is passed in by the route rather than imported, so this feature
  * never reaches into the catalogue that the server action has to consult.
  */
-export function CartView({ checkout }: { checkout: CheckoutAction }) {
+export function CartView({
+  checkout,
+  check,
+}: {
+  checkout: CheckoutAction;
+  check: CheckCartAction;
+}) {
   const { lines, total, setQuantity, remove } = useCart();
   const t = useTranslations("cart");
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<CheckoutFailure | null>(null);
   const [unavailable, setUnavailable] = useState<string[]>([]);
+
+  /**
+   * Asks the shop about this cart as soon as it is on screen, and again
+   * whenever it changes.
+   *
+   * The cart lives in the browser, so the server has no idea what is in it
+   * until it is told — which is why this had to wait for the payment button
+   * before. Now a sold-out line is marked where the customer can still do
+   * something about it, and the button is closed off rather than sending them
+   * to Stripe to be turned away.
+   *
+   * It does not decide anything: `startCheckout` checks again against fresh
+   * rows, because the last copy can go between this answer and that click.
+   */
+  const signature = lines.map((line) => `${line.slug}:${line.quantity}`).join();
+
+  useEffect(() => {
+    // An empty cart renders its own view below and never reaches the list, so
+    // there is no stale marking to clear — and clearing it here would be a
+    // synchronous setState in an effect, which is a render loop waiting to
+    // happen. Adding a line runs this again and sets a fresh verdict.
+    if (lines.length === 0) return;
+
+    let live = true;
+
+    void check(lines.map(({ slug, quantity }) => ({ slug, quantity }))).then(
+      (verdict) => {
+        if (!live) return;
+
+        const blocked = [...verdict.outOfStock, ...verdict.unavailable];
+        setUnavailable(blocked);
+        setError(
+          verdict.outOfStock.length > 0
+            ? "outOfStock"
+            : verdict.unavailable.length > 0
+              ? "unavailable"
+              : null,
+        );
+      },
+    );
+
+    return () => {
+      live = false;
+    };
+    // Keyed on the cart's contents rather than the array, which is rebuilt on
+    // every render of the store.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, check]);
 
   function handleCheckout() {
     setError(null);
@@ -166,8 +225,8 @@ export function CartView({ checkout }: { checkout: CheckoutAction }) {
         <button
           type="button"
           onClick={handleCheckout}
-          disabled={isPending}
-          className="mt-2 w-full cursor-pointer bg-brand px-8 py-3 text-[14px] transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:cursor-progress disabled:opacity-60 sm:w-auto"
+          disabled={isPending || unavailable.length > 0}
+          className="mt-2 w-full cursor-pointer bg-brand px-8 py-3 text-[14px] transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {isPending ? t("redirecting") : t("checkout")}
         </button>
