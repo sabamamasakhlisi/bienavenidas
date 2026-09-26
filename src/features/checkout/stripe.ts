@@ -20,6 +20,8 @@ export type PricedItem = {
   amount: number;
   currency: Currency;
   quantity: number;
+  /** The linked price in the Stripe product catalogue, when there is one. */
+  stripePriceId?: string;
 };
 
 /**
@@ -45,6 +47,47 @@ function stripe() {
   return client;
 }
 
+export type LinkedPrice = {
+  id: string;
+  amount: number;
+  currency: Currency;
+};
+
+/**
+ * Links books to the Stripe product catalogue.
+ *
+ * A book is linked when one of its Stripe prices has the book's slug as its
+ * **lookup key** (Product → price → "Lookup key" in the dashboard). Lookup keys
+ * are chosen by you, not by Stripe, so the same link works in test and live
+ * mode, where price IDs differ. Books with no linked price keep being charged
+ * from the site's own catalogue.
+ */
+export async function getLinkedPrices(
+  slugs: string[],
+): Promise<Map<string, LinkedPrice>> {
+  const linked = new Map<string, LinkedPrice>();
+
+  // Stripe accepts at most 10 lookup keys per request.
+  for (let i = 0; i < slugs.length; i += 10) {
+    const prices = await stripe().prices.list({
+      lookup_keys: slugs.slice(i, i + 10),
+      active: true,
+      limit: 10,
+    });
+
+    for (const price of prices.data) {
+      if (!price.lookup_key || price.unit_amount === null) continue;
+      linked.set(price.lookup_key, {
+        id: price.id,
+        amount: price.unit_amount,
+        currency: price.currency.toUpperCase() as Currency,
+      });
+    }
+  }
+
+  return linked;
+}
+
 export async function createCheckoutSession({
   items,
   locale,
@@ -57,17 +100,21 @@ export async function createCheckoutSession({
   const session = await stripe().checkout.sessions.create({
     mode: "payment",
     locale,
-    line_items: items.map((item) => ({
-      quantity: item.quantity,
-      price_data: {
-        currency: item.currency.toLowerCase(),
-        unit_amount: item.amount,
-        product_data: {
-          name: item.name,
-          metadata: { slug: item.slug, isbn: item.isbn },
-        },
-      },
-    })),
+    line_items: items.map((item) =>
+      item.stripePriceId
+        ? { quantity: item.quantity, price: item.stripePriceId }
+        : {
+            quantity: item.quantity,
+            price_data: {
+              currency: item.currency.toLowerCase(),
+              unit_amount: item.amount,
+              product_data: {
+                name: item.name,
+                metadata: { slug: item.slug, isbn: item.isbn },
+              },
+            },
+          },
+    ),
     shipping_address_collection: { allowed_countries: [...SHIPPING_COUNTRIES] },
     // Couriers ask for a phone number on delivery.
     phone_number_collection: { enabled: true },
@@ -121,7 +168,9 @@ export async function getPaidOrder(session: Stripe.Checkout.Session) {
           ? product.metadata
           : {};
       return {
-        slug: metadata.slug ?? "",
+        // Linked catalogue prices carry the slug as their lookup key; ad-hoc
+        // prices carry it in their product's metadata.
+        slug: line.price?.lookup_key ?? metadata.slug ?? "",
         isbn: metadata.isbn ?? null,
         title: line.description ?? "",
         quantity: line.quantity ?? 0,
