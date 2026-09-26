@@ -29,7 +29,28 @@ only divided by 100 in `formatMoney`, for display.
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Stock, prices and recording orders. Without them checkout skips the stock check and falls back to catalogue prices. Projects older than 2025 name the key `SUPABASE_SERVICE_ROLE_KEY`; either is read. |
 | `SITE_URL` | Optional. Base URL for Stripe's return links; defaults to the request's host. |
 
-See `.env.example`.
+Set these in `.env.local`, which is gitignored.
+
+## Linking books to the Stripe product catalogue
+
+A book is linked to a Stripe product when one of that product's prices has the
+book's slug (the last part of `/libros/<slug>`) as its **lookup key**. Checkout
+then charges that Stripe price instead of the site's, and orders read the slug
+back from it. Lookup keys are yours, not Stripe's, so the same link works in
+test and live mode.
+
+Price has three sources, each overriding the one before it:
+
+1. `catalog.ts` — the static price in the repository.
+2. `stock.price` in Supabase — the euros you edit in the dashboard.
+3. A linked Stripe price — and this one is not a preference: a line sent to
+   Stripe as a price ID is charged at Stripe's amount whatever we send beside
+   it.
+
+So a book priced in exactly one of those is charged from that place. Where a
+linked Stripe price disagrees with the price the page quoted, checkout charges
+Stripe's and logs the difference — keep them equal, or the customer is charged
+something other than what they were shown.
 
 ## Running the shop in Supabase
 

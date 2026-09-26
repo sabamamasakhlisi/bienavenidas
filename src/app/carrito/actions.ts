@@ -12,6 +12,7 @@ import {
 import { MAX_QUANTITY } from "@/features/checkout/limits";
 import {
   createCheckoutSession,
+  getLinkedPrices,
   isCheckoutConfigured,
   type PricedItem,
 } from "@/features/checkout/stripe";
@@ -215,6 +216,41 @@ export async function startCheckout(
 
   let url: string;
   try {
+    // Last word on price, and the only one that isn't a preference: a line
+    // sent to Stripe as a linked price ID is charged at Stripe's amount
+    // whatever we put beside it, so for those books Stripe *is* the price.
+    //
+    // Three sources, in order — the catalogue's own price, overridden by the
+    // shop's record in Supabase, overridden by a linked Stripe price. Each
+    // only applies where the one before it left off, so a book priced in
+    // exactly one place is charged from that place.
+    const linked = await getLinkedPrices(items.map((item) => item.slug));
+    for (const item of items) {
+      const price = linked.get(item.slug);
+      if (!price) continue;
+
+      if (price.amount !== item.amount || price.currency !== item.currency) {
+        // Worth saying out loud: the customer is about to be charged
+        // something other than what the page quoted them.
+        console.warn(
+          `[checkout] ${item.slug}: Stripe price ${price.amount} ${price.currency} ` +
+            `differs from the shop's ${item.amount} ${item.currency} — charging Stripe's`,
+        );
+      }
+
+      Object.assign(item, {
+        stripePriceId: price.id,
+        amount: price.amount,
+        currency: price.currency,
+      });
+    }
+
+    // Re-checked because a linked price may have brought a second currency in
+    // with it, and Stripe charges a session in one.
+    if (new Set(items.map((item) => item.currency)).size !== 1) {
+      return { ok: false, reason: "unavailable", slugs: [] };
+    }
+
     url = await createCheckoutSession({
       items,
       locale,
