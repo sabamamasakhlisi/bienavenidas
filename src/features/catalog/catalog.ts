@@ -13,7 +13,7 @@ import type { Locale } from "@/i18n/config";
 const books: Book[] = [
   {
     slug: "joven-chica",
-    isbn: "9788412000001" as ISBN,
+    isbn: "9788409906796" as ISBN,
     title: "Primeros materiales para una teoría de la Joven-Chica",
     authors: [{ slug: "tiqqun", name: "TIQQUN", bio: {} }],
     description:
@@ -52,7 +52,9 @@ const books: Book[] = [
     description:
       "Dedicated 2 all bittersweet scrollers, always caretaking, 4ever and never notification-on-mute, grass-touching lovers/haters of the internet. <3",
     price: { amount: 2000, currency: "EUR" },
-    stock: "in_stock",
+    // Still in the making: the entry announces it and takes notice-me mail
+    // instead of offering a price.
+    stock: "coming_soon",
     pageCount: 148,
     publishedAt: "2026-01-01",
     credits: "cc. 2026 Veronica Obenauer\nPrimera edición",

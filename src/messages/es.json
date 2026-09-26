@@ -45,10 +45,13 @@
     "addToCart": "Añadir {title} a la cesta",
     "added": "Añadido",
     "addedTo": "{title} añadido a la cesta",
+    "notify": "Avísame",
+    "notifySubject": "Avísame cuando esté disponible: {title}",
     "stock": {
       "in_stock": "Disponible",
       "low_stock": "Últimos ejemplares",
       "out_of_stock": "Agotado",
+      "coming_soon": "Próximamente",
       "preorder": "Reserva anticipada",
       "out_of_print": "Descatalogado"
     }

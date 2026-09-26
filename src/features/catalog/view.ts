@@ -18,6 +18,7 @@ export type BookView = {
   credits?: string;
   price: string;
   isOpenCall: boolean;
+  isComingSoon: boolean;
 };
 
 export function toView(book: Book, locale: Locale): BookView {
@@ -33,5 +34,7 @@ export function toView(book: Book, locale: Locale): BookView {
     price: formatPrice(book.price, locale),
     // A free listing is a call for submissions, not something to buy.
     isOpenCall: book.price.amount === 0,
+    // Announced but unfinished: the entry takes an interest, not an order.
+    isComingSoon: book.stock === "coming_soon",
   };
 }

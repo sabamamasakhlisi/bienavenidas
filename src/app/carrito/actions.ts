@@ -31,7 +31,7 @@ export type CheckoutResult =
     };
 
 /** Titles that are listed but not sold: nothing to charge, or nothing to ship. */
-const UNBUYABLE = new Set(["out_of_stock", "out_of_print"]);
+const UNBUYABLE = new Set(["out_of_stock", "out_of_print", "coming_soon"]);
 
 /**
  * Turns the browser's cart into a Stripe Checkout session.

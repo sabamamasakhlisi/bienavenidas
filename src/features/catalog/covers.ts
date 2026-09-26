@@ -13,6 +13,7 @@ import type { Book } from "@/types/book";
  *
  *   <slug>.<ext>         the cover, face-out
  *   <slug>.spine.<ext>   the closed book standing on the shelf
+ *   <slug>.detail.<ext>  shown in the book's own entry instead of the cover
  *
  * Server-only: this touches `node:fs`, so it must never be imported from a
  * component marked `"use client"`.
@@ -59,6 +60,13 @@ export function attachCover(book: Book): Book {
   if (!resolved.spineImage) {
     const file = findFile(`${book.slug}.spine`);
     if (file) resolved.spineImage = toImageRef(file, book.spineAspect ?? 0.2);
+  }
+
+  // `<slug>.detail.<ext>` — the entry's own image. Optional: without it the
+  // entry shows the cover, which is the usual case.
+  if (!resolved.detailImage) {
+    const file = findFile(`${book.slug}.detail`);
+    if (file) resolved.detailImage = toImageRef(file, book.coverAspect ?? 0.66);
   }
 
   return resolved;

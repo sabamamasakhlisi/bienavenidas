@@ -38,7 +38,10 @@ export function NavLinks({ className = "" }: { className?: string }) {
 
   return (
     <nav className={className}>
-      <ul className="flex items-center gap-10 lg:gap-20">
+      {/* Below `md` the bar is the links' to fill, so they spread across it
+          rather than bunching in the middle. From `md` the monogram is back and
+          the row returns to fixed gaps around the centre. */}
+      <ul className="flex w-full items-center justify-between gap-3 sm:gap-8 md:w-auto md:justify-start md:gap-10 lg:gap-20">
         {NAV_ROUTES.map(({ href, key }) => {
           const active = isActiveRoute(pathname, href);
 

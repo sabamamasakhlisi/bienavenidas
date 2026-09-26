@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 
 import { AddToCart } from "./AddToCart";
 import { BookCover } from "./BookCover";
+import { FadedText } from "./FadedText";
+import { NotifyLink } from "./NotifyLink";
 import { Shelf } from "./Shelf";
 import type { ShelfItem } from "./catalog";
 import type { BookView } from "./view";
@@ -17,12 +19,22 @@ import type { BookView } from "./view";
  * shows on its own until it is opened, and clicking a title up on the shelf is
  * just another way of opening the same section.
  *
+ * Two layouts, because the interaction differs and not just the widths. On a
+ * pointer the entry is a quote you open; on a phone there is nothing to hover,
+ * so every entry stands open from the start and the long text is what gives —
+ * quote and description each get a fixed height and scroll inside it. Both are
+ * in the markup and CSS picks one, which keeps the server render and the first
+ * client paint identical at either size.
+ *
  * Hovering a quote lifts that book's cover onto the pointer. The follower is
  * positioned by writing `style.transform` directly on each pointermove — at
  * pointer frequency, routing that through state would re-render every section.
  * Which book is hovered is derived from the event target rather than per-quote
  * enter/leave handlers, so the two can never disagree.
  */
+/** The quote is set in the accent on mobile, as in the design. */
+const QUOTE_COLOUR = "#F5C8E8";
+
 export function Reader({
   views,
   layout,
@@ -52,6 +64,10 @@ export function Reader({
   }
 
   function trackPointer(event: React.PointerEvent) {
+    // The follower is a cover carried on the cursor; a finger has no cursor to
+    // carry it on, and a drag would leave it stranded mid-page.
+    if (event.pointerType !== "mouse") return;
+
     const node = followerRef.current;
     if (node) {
       node.style.transform = `translate3d(${event.clientX + 18}px, ${
@@ -107,14 +123,87 @@ export function Reader({
             ? "items-start text-start md:flex-row md:items-start"
             : "items-end text-end md:flex-row-reverse md:items-start";
 
+          // Whatever stands where the price stands. Built once and placed by
+          // both layouts, so the three cases can't drift apart.
+          const control = view.isOpenCall ? (
+            <p className="bg-brand px-4 py-2 text-center text-[13px]">
+              {t("openCall")}
+            </p>
+          ) : view.isComingSoon ? (
+            <NotifyLink title={view.title} />
+          ) : (
+            <AddToCart
+              book={view.book}
+              title={view.title}
+              price={view.price}
+            />
+          );
+
           return (
             <section
               key={view.book.slug}
               id={`book-${view.book.slug}`}
               tabIndex={-1}
-              className="scroll-mt-16 px-6 py-20 md:px-16 md:py-28"
+              className="scroll-mt-16 px-6 py-12 md:px-16 md:py-28"
             >
-              <div className="w-full">
+              {/* Phones and small tablets. Always expanded: with no hover there
+                  is nothing to reveal the entry with, and a tap that only
+                  unfolds text is a tap that reads as a dead end. */}
+              <div className="md:hidden">
+                <div className="grid grid-cols-2 gap-x-2">
+                  <div className="flex flex-col gap-3 text-[12px] leading-relaxed">
+                    <h2 className="bask-font text-[15px] italic">
+                      {view.title}
+                      <span className="not-italic">, {view.author}</span>
+                    </h2>
+
+                    {view.credits && (
+                      <p className="whitespace-pre-line text-muted">
+                        {view.credits}
+                      </p>
+                    )}
+
+                    {/* Pushed to the foot of its column so it lands level with
+                        the bottom of the cover beside it. */}
+                    <div className="mt-auto w-full">{control}</div>
+                  </div>
+
+                  <div
+                    className="w-full"
+                    style={{
+                      aspectRatio: String(view.book.coverAspect ?? 0.66),
+                      containerType: "inline-size",
+                    }}
+                  >
+                    <BookCover
+                      book={view.book}
+                      title={view.title}
+                      image={view.book.detailImage}
+                      sizes="45vw"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 items-start gap-x-2">
+                  <FadedText>
+                    <p
+                      className="quote text-[15px] whitespace-pre-line"
+                      style={{ color: QUOTE_COLOUR }}
+                    >
+                      {view.quote}
+                    </p>
+                  </FadedText>
+
+                  <FadedText>
+                    <p className="text-[15px] leading-relaxed">
+                      {view.description}
+                    </p>
+                  </FadedText>
+                </div>
+              </div>
+
+              {/* From `md`: the quote on its own until you open it. */}
+              <div className="hidden w-full md:block">
                 <div
                   className={`flex w-full flex-col gap-8 md:gap-12 ${alignment}`}
                 >
@@ -158,6 +247,7 @@ export function Reader({
                         <BookCover
                           book={view.book}
                           title={view.title}
+                          image={view.book.detailImage}
                           sizes="(max-width: 768px) 60vw, 200px"
                         />
                       </div>
@@ -176,19 +266,7 @@ export function Reader({
                           </p>
                         )}
 
-                        <div className="mt-2 w-full">
-                          {view.isOpenCall ? (
-                            <p className="bg-brand px-4 py-2 text-center text-[13px]">
-                              {t("openCall")}
-                            </p>
-                          ) : (
-                            <AddToCart
-                              book={view.book}
-                              title={view.title}
-                              price={view.price}
-                            />
-                          )}
-                        </div>
+                        <div className="mt-2 w-full">{control}</div>
                       </div>
                     </div>
                   )}

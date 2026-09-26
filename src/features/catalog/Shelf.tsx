@@ -22,6 +22,19 @@ const GAP = 5;
 /** An open book never takes more than this share of the shelf. */
 const MAX_OPEN_SHARE = 0.35;
 
+/** Below this the shelf scrolls instead of squeezing. Matches Tailwind's `md`. */
+const COMPACT_QUERY = "(max-width: 767px)";
+
+/**
+ * Whether opening has to be a tap. Asked of the pointer rather than the screen:
+ * a tablet in landscape is wide enough for the squeezed shelf but still has no
+ * hover to open anything with.
+ */
+const TOUCH_QUERY = "(hover: none)";
+
+/** Let the swing start before centring, or we'd centre the spine it left. */
+const OPEN_SCROLL_DELAY = 350;
+
 /** How many things stand on the shelf at once. */
 const MAX_ITEMS = 10;
 
@@ -69,8 +82,15 @@ function closedWidth(book: Book) {
  * the numbers ourselves lets every item ease together.
  *
  * All open/closed state lives here too: only one title is open at a time, and
- * the intro sequence spans several of them in turn. Precedence is hover →
- * focus → resting.
+ * the intro sequence spans several of them in turn. Precedence is hover → tap
+ * → focus → resting.
+ *
+ * Narrow screens get a different shelf, not a smaller one. Squeezing ten items
+ * into a phone turns every spine into a sliver and the open cover into a stamp,
+ * so below `md` the row keeps each item's authored width and scrolls sideways —
+ * you browse it by dragging, which is the gesture a shelf actually invites.
+ * Hover has no meaning there either: a tap opens the book where it stands, and
+ * a second tap on the open book goes down to its entry.
  */
 export function Shelf({
   layout,
@@ -88,8 +108,12 @@ export function Shelf({
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [available, setAvailable] = useState<number | null>(null);
+  const [rowHeight, setRowHeight] = useState<number | null>(null);
+  const [compact, setCompact] = useState(false);
+  const [touch, setTouch] = useState(false);
   const [restingSlug, setRestingSlug] = useState<string | null>(null);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
+  const [tappedSlug, setTappedSlug] = useState<string | null>(null);
   const [focusedSlug, setFocusedSlug] = useState<string | null>(null);
 
   // Measure the row's content box, and keep measuring as the window changes.
@@ -99,11 +123,16 @@ export function Shelf({
 
     const measure = () => {
       const style = getComputedStyle(row);
+      // `clientWidth` is what can be seen, not what the row contains — which is
+      // the number we want on a scrolling shelf.
       setAvailable(
         row.clientWidth -
           parseFloat(style.paddingLeft) -
           parseFloat(style.paddingRight),
       );
+      setRowHeight(row.clientHeight);
+      setCompact(window.matchMedia(COMPACT_QUERY).matches);
+      setTouch(window.matchMedia(TOUCH_QUERY).matches);
     };
 
     // Measure once directly rather than waiting on the observer's first
@@ -143,6 +172,30 @@ export function Shelf({
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [intro]);
 
+  // Opening a book on a scrolling shelf grows it from a spine to a cover, which
+  // can push it off the edge of the screen it was tapped on. Bring it back.
+  useEffect(() => {
+    if (!compact || !tappedSlug) return;
+
+    const node = rowRef.current?.querySelector<HTMLElement>(
+      `[data-book-slug="${tappedSlug}"]`,
+    );
+    if (!node) return;
+
+    const id = window.setTimeout(
+      () =>
+        node.scrollIntoView({
+          behavior: "smooth",
+          inline: "center",
+          // Never scroll the page itself — only the row under the finger.
+          block: "nearest",
+        }),
+      OPEN_SCROLL_DELAY,
+    );
+
+    return () => window.clearTimeout(id);
+  }, [compact, tappedSlug]);
+
   /**
    * Which book the pointer is over, derived from the event target on every
    * move. Enter/leave handlers on each button can't be trusted here: opening a
@@ -150,13 +203,31 @@ export function Shelf({
    * firing an enter for the book that arrived.
    */
   function trackPointer(event: React.PointerEvent) {
+    // A finger or pen only "hovers" while it is pressed, so on a phone this
+    // fires all the way through a drag and flicks every book it passes open.
+    // There, opening is what a tap is for.
+    if (event.pointerType !== "mouse") return;
+
     const slug =
       (event.target as Element | null)?.closest<HTMLElement>("[data-book-slug]")
         ?.dataset.bookSlug ?? null;
     if (slug !== hoveredSlug) setHoveredSlug(slug);
   }
 
-  const openSlug = hoveredSlug ?? focusedSlug ?? restingSlug;
+  /**
+   * A tap on a touch shelf does the job hover does on a pointer shelf — the
+   * first one opens the book where it stands, and only a second tap, on a book
+   * already open, follows through to its entry.
+   */
+  function handleSelect(slug: string) {
+    if (touch && tappedSlug !== slug) {
+      setTappedSlug(slug);
+      return;
+    }
+    onSelect(slug);
+  }
+
+  const openSlug = hoveredSlug ?? tappedSlug ?? focusedSlug ?? restingSlug;
 
   const shelf = trimLayout(layout);
 
@@ -179,8 +250,21 @@ export function Shelf({
   // `scale`. Scale exists to spread scenery across a sparse shelf; applying it
   // here too would make the cover balloon simply because there were few spines
   // beside it. It is only clamped so it can't swallow a narrow screen.
-  const openWidthOf = (book: Book) =>
-    Math.min(book.shelfWidth ?? 280, (content - gaps) * MAX_OPEN_SHARE);
+  //
+  // Height is a clamp as well: `ShelfBook` derives its height from this width,
+  // and a cover taller than the shelf would be cropped by `max-h-full` rather
+  // than kept in proportion. On a scrolling shelf the cover may take the whole
+  // visible width — there is more shelf either side of it.
+  const openWidthOf = (book: Book) => {
+    const byWidth = compact
+      ? (available ?? content) - GAP * 2
+      : (content - gaps) * MAX_OPEN_SHARE;
+    const byHeight = rowHeight
+      ? rowHeight * (book.coverAspect ?? 0.66)
+      : Infinity;
+
+    return Math.min(book.shelfWidth ?? 280, byWidth, byHeight);
+  };
 
   const openPx = openIndex >= 0 ? openWidthOf(books[openSlug!].book) : 0;
 
@@ -205,8 +289,12 @@ export function Shelf({
   );
 
   // Whatever the fixed items take, the rest share what's left in proportion.
+  // Not on a scrolling shelf: there is no "what's left" to share, because the
+  // row is as long as its contents and the screen is a window onto it.
   const flexFactor =
-    flexibleNatural > 0 ? (content - gaps - fixedTotal) / flexibleNatural : 1;
+    compact || flexibleNatural <= 0
+      ? 1
+      : (content - gaps - fixedTotal) / flexibleNatural;
 
   const widths = shelf.map((item, index) => {
     if (index === openIndex) return openPx;
@@ -217,13 +305,20 @@ export function Shelf({
   return (
     <section
       aria-label={hint}
-      className="relative flex h-[calc(100svh-var(--hdr-h))] flex-col justify-end overflow-hidden"
+      // Short of the full screen on a phone: a shelf that fills the viewport
+      // leaves nothing below it to suggest the page continues, and the covers
+      // are bounded by the row's height either way.
+      className="relative flex h-[60svh] flex-col justify-end overflow-hidden md:h-[calc(100svh-var(--hdr-h))]"
     >
       <div
         ref={rowRef}
         onPointerMove={trackPointer}
         onPointerLeave={() => setHoveredSlug(null)}
-        className="flex flex-1 items-end gap-[5px] px-3 md:px-6"
+        // Below `md` the row is longer than the screen and is dragged along.
+        // `overscroll-x-contain` keeps a swipe past the end from being taken
+        // for a back gesture; the scrollbar is hidden because the shelf's own
+        // overhang already says there is more of it.
+        className="flex flex-1 items-end gap-[5px] overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 [-ms-overflow-style:none] [scrollbar-width:none] md:overflow-visible md:px-6 [&::-webkit-scrollbar]:hidden"
       >
         {shelf.map((item, index) => {
           if (item.kind === "spine") {
@@ -254,7 +349,7 @@ export function Shelf({
               open={openSlug === item.slug}
               width={widths[index]}
               openWidth={openWidthOf(entry.book)}
-              onSelect={onSelect}
+              onSelect={handleSelect}
               onFocus={() => setFocusedSlug(item.slug)}
               onBlur={() =>
                 setFocusedSlug((current) =>

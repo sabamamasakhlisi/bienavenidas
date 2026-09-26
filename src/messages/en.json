@@ -45,10 +45,13 @@
     "addToCart": "Add {title} to cart",
     "added": "Added",
     "addedTo": "{title} added to cart",
+    "notify": "Notify me",
+    "notifySubject": "Notify me when this is available: {title}",
     "stock": {
       "in_stock": "In stock",
       "low_stock": "Low stock",
       "out_of_stock": "Out of stock",
+      "coming_soon": "Coming soon",
       "preorder": "Pre-order",
       "out_of_print": "Out of print"
     }

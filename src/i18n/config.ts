@@ -11,6 +11,17 @@ export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "es";
 
+/**
+ * Runs the site in a single language.
+ *
+ * While this is set, negotiation is bypassed everywhere — the proxy, the
+ * request config and any stored cookie from an earlier visit — and the header
+ * hides the `es/en` switch, because a switch that cannot change anything is
+ * worse than no switch. Nothing else is removed: set this to `null` and both
+ * locales come straight back.
+ */
+export const pinnedLocale: Locale | null = "es";
+
 /** Cookie that carries the locale. The URL never does. */
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 
@@ -45,6 +56,8 @@ export function negotiateLocale(
   acceptLanguage?: string | null,
   country?: string | null,
 ): Locale {
+  if (pinnedLocale) return pinnedLocale;
+
   const fromHeader = parseAcceptLanguage(acceptLanguage);
   if (fromHeader) return fromHeader;
 

@@ -2,7 +2,12 @@ import { cookies, headers } from "next/headers";
 
 import { getRequestConfig } from "next-intl/server";
 
-import { LOCALE_COOKIE, isLocale, negotiateLocale } from "./config";
+import {
+  LOCALE_COOKIE,
+  isLocale,
+  negotiateLocale,
+  pinnedLocale,
+} from "./config";
 
 /**
  * Resolves the active locale for every request.
@@ -17,7 +22,11 @@ export default getRequestConfig(async () => {
   const stored = cookieStore.get(LOCALE_COOKIE)?.value;
 
   let locale;
-  if (isLocale(stored)) {
+  // A cookie written before the site was pinned would otherwise keep that
+  // reader in a language they can no longer switch out of.
+  if (pinnedLocale) {
+    locale = pinnedLocale;
+  } else if (isLocale(stored)) {
     locale = stored;
   } else {
     const headerStore = await headers();

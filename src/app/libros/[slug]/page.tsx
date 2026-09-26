@@ -7,6 +7,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { Container } from "@/components/ui/Container";
 import { BookCover } from "@/features/catalog/BookCover";
+import { NotifyLink } from "@/features/catalog/NotifyLink";
 import {
   formatPrice,
   getBookBySlug,
@@ -55,6 +56,7 @@ export default async function BookPage({ params }: Props) {
   const tCommon = await getTranslations("common");
 
   const price = formatPrice(book.price, locale);
+  const comingSoon = book.stock === "coming_soon";
 
   return (
     <Container className="py-20 md:py-28">
@@ -69,7 +71,13 @@ export default async function BookPage({ params }: Props) {
           containerType: "inline-size",
         }}
       >
-        <BookCover book={book} title={title} sizes="260px" priority />
+        <BookCover
+          book={book}
+          title={title}
+          image={book.detailImage}
+          sizes="260px"
+          priority
+        />
       </div>
 
       <h1 className="bask-font mt-8 text-4xl md:text-5xl">{title}</h1>
@@ -96,10 +104,19 @@ export default async function BookPage({ params }: Props) {
         </dd>
       </dl>
 
-      <p className="mt-10 text-lg">
-        {price}{" "}
-        <span className="text-sm opacity-60">{t(`stock.${book.stock}`)}</span>
-      </p>
+      {/* Nothing is on sale until the book exists, so an unfinished title
+          shows its status and a way to be told, not a price. */}
+      {comingSoon ? (
+        <div className="mt-10 max-w-[260px]">
+          <p className="mb-3 text-lg">{t("stock.coming_soon")}</p>
+          <NotifyLink title={title} />
+        </div>
+      ) : (
+        <p className="mt-10 text-lg">
+          {price}{" "}
+          <span className="text-sm opacity-60">{t(`stock.${book.stock}`)}</span>
+        </p>
+      )}
     </Container>
   );
 }

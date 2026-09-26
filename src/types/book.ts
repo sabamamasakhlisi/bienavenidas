@@ -25,6 +25,8 @@ export type StockStatus =
   | "in_stock"
   | "low_stock"
   | "out_of_stock"
+  /** Announced, but not finished — there is nothing to buy or reserve yet. */
+  | "coming_soon"
   | "preorder"
   | "out_of_print";
 
@@ -77,6 +79,12 @@ export type Book = {
   /** ISO 8601 date. */
   publishedAt: string;
   cover?: ImageRef;
+  /**
+   * Shown in the book's own entry instead of the cover, when the two differ —
+   * a title still in the making may have artwork to show before it has a
+   * finished cover. The shelf keeps using the cover either way.
+   */
+  detailImage?: ImageRef;
   collection?: string;
   /** Colophon lines exactly as set in the design (newline separated). */
   credits?: string;

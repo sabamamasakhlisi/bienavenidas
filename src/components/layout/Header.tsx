@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
 
 import { CartLink } from "@/features/checkout/CartLink";
+import { pinnedLocale } from "@/i18n/config";
 
 import { LanguageSelector } from "./LanguageSelector";
 import { Logo } from "./Logo";
-import { MobileNav } from "./MobileNav";
 import { NavLinks } from "./NavLinks";
 import { isActiveRoute } from "./routes";
 
@@ -93,51 +93,66 @@ export function Header() {
     >
       <div className="relative h-[var(--hdr-h)] text-[var(--hdr-fg)]">
         {/* The ground the monogram stands on: the page's colour, carried up
-            through the strip and down past it to the full height of the mark. */}
+            through the strip and down past it to the full height of the mark.
+            Goes with the monogram below `md`. */}
         <div
           aria-hidden
-          className="absolute start-0 top-0 h-[var(--logo-h)] w-[var(--logo-w)] bg-[var(--hdr-plate)]"
+          className="absolute start-0 top-0 hidden h-[var(--logo-h)] w-[var(--logo-w)] bg-[var(--hdr-plate)] md:block"
         />
 
-        {/* The bar's shaped left end, at natural size — never scaled. */}
+        {/* The bar's shaped left end, at natural size — never scaled. Its whole
+            job is to weave around the monogram, so on mobile, where there is no
+            monogram, it would be a notch cut out of nothing. */}
         <svg
           aria-hidden
           width="147"
           height="39"
           viewBox="0 0 147 39"
           fill="currentColor"
-          className="absolute start-0 top-0 text-[var(--hdr-bg)]"
+          className="absolute start-0 top-0 hidden text-[var(--hdr-bg)] md:block"
         >
           <path d="M0 0H147V28L132 14.5H103.5L94 30.5L73.5 28L46.5 39L40 36.5L26.5 28L8 19L0 15.5Z" />
         </svg>
 
         {/* The plain remainder. Overlaps the shape by a pixel so no seam
-            shows where the two meet. */}
+            shows where the two meet — and on mobile it is the whole bar. */}
         <div
           aria-hidden
-          className="absolute start-[146px] end-0 top-0 h-[var(--hdr-h)] bg-[var(--hdr-bg)]"
+          className="absolute start-0 end-0 top-0 h-[var(--hdr-h)] bg-[var(--hdr-bg)] md:start-[146px]"
         />
 
         {/* `relative` so it paints above the two absolute layers behind it. */}
-        <div className="relative mx-auto grid h-full max-w-[1512px] grid-cols-[1fr_auto_1fr] items-center gap-4 ps-4 pe-6">
-          <span aria-hidden />
+        {/* Two layouts, one row of markup. Below `md` the monogram is gone, so
+            the links take the bar across its whole width and the cart sits at
+            the end; from `md` the empty first column returns and the links go
+            back to the true centre, with the monogram overhanging the start. */}
+        <div className="relative mx-auto grid h-full max-w-[1512px] grid-cols-[1fr_auto] items-center gap-3 px-3 md:grid-cols-[1fr_auto_1fr] md:gap-4 md:ps-4 md:pe-6">
+          {/* Counterweight to the cart, so the links land in the middle. Not
+              rendered below `md`, where there is no middle to land in. */}
+          <span aria-hidden className="hidden md:block" />
 
-          <NavLinks className="hidden justify-self-center md:block" />
-          <MobileNav className="justify-self-center md:hidden" />
+          {/* The same row of links at every width — the design has no drawer,
+              and three short words fit. */}
+          <NavLinks className="min-w-0 md:justify-self-center" />
 
           <div className="flex items-center gap-5 justify-self-end md:gap-8">
             <CartLink active={isActiveRoute(pathname, "/carrito")} />
-            <LanguageSelector />
+            {/* Hidden, not removed: while the site is pinned to one language
+                the switch has nothing to switch, and `display: none` also
+                takes it out of the tab order and the accessibility tree. */}
+            <LanguageSelector className={pinnedLocale ? "hidden" : ""} />
           </div>
         </div>
 
         {/* Overhangs the bar, so it lives outside the grid and above the page.
             Takes the bar's colour unless a route tints it, or it would vanish
-            on the light theme. Its width must match the bar's inset above. */}
+            on the light theme. Its width must match the bar's inset above.
+            Dropped below `md`: at phone width the mark eats a third of the bar
+            and leaves the links nowhere to go. */}
         <Link
           href="/libros"
           aria-label="BIEN*VENIDAS"
-          className="absolute start-0 top-0 z-10 block w-[var(--logo-w)] text-[var(--hdr-logo)]"
+          className="absolute start-0 top-0 z-10 hidden w-[var(--logo-w)] text-[var(--hdr-logo)] md:block"
         >
           <Logo className="h-auto w-full" />
         </Link>
