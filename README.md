@@ -1,31 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bienavenidas
 
-## Getting Started
+Website for the Bienavenidas publishing house: the catalogue of books, an
+editorial poster, contact details, and (in progress) an online shop.
 
-First, run the development server:
+Built with Next.js 16 (App Router), React 19, Tailwind CSS 4 and next-intl, and
+deployed on Vercel.
+
+> This Next.js version has breaking changes from older releases. Before writing
+> code, read the relevant guide in `node_modules/next/dist/docs/` (see
+> `AGENTS.md`).
+
+## Getting started
+
+Requires Node 20+ and pnpm (the version is pinned in `package.json`).
 
 ```bash
-pnpm dev
-
+pnpm install
+pnpm dev      # http://localhost:3000
+pnpm lint
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Pages
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Route             | What it shows                                        |
+| ----------------- | ---------------------------------------------------- |
+| `/`               | The book shelf (front page)                          |
+| `/libros`         | Same shelf; its canonical URL points to `/`          |
+| `/libros/[slug]`  | A single book with its reader and add-to-cart button |
+| `/bienvenidas`    | The bienvenidas poster, pannable at full size        |
+| `/contacto`       | Contact details and social links                     |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Languages
 
-## Learn More
+The site is bilingual, Spanish (default) and English. The locale lives in the
+`NEXT_LOCALE` cookie, never in the URL, so every page has one address for both
+languages. On a first visit `src/proxy.ts` picks a locale from the browser's
+`Accept-Language` header (falling back to the visitor's country) and stores it.
+Strings are in `src/messages/es.json` and `src/messages/en.json`.
 
-To learn more about Next.js, take a look at the following resources:
+## Project layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+  app/          routes (see the table above)
+  components/   header, navigation, language selector, shared UI
+  features/
+    catalog/    book data (catalog.ts), covers, shelf and reader
+    checkout/   cart state
+    editorial/  the pannable poster
+  i18n/         locale config and next-intl request setup
+  messages/     translations
+public/         logos, fonts, covers, poster
+scripts/        image build scripts
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Each folder under `src/features/` has its own README with more detail.
 
-## Deploy on Vercel
+## Images
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Covers and the poster are served as AVIF and WebP with a JPEG/PNG fallback.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `pnpm covers` writes `.avif` and `.webp` versions of every original in
+  `public/covers/`. Add a new cover as a `.png` or `.jpg` there and rerun it.
+- `pnpm poster` downsizes the full-resolution poster export (about 124 MB, kept
+  out of the repo) and writes `public/poster_bienavenidas_lowres.*`. Put the
+  export at `public/poster_bienavenidas.jpg` first, then rename the three
+  outputs over `public/poster_bienavenidas.*`, which is what the page serves.
+
+## Search engines
+
+The root layout sets `metadataBase` so canonical links are absolute. It uses
+`NEXT_PUBLIC_SITE_URL` if set, otherwise Vercel's production domain
+(`VERCEL_PROJECT_PRODUCTION_URL`). Set `NEXT_PUBLIC_SITE_URL` in Vercel if the
+public domain ever differs from the one Vercel reports.
+
+## Deployment
+
+Pushes deploy to Vercel; every pull request gets a preview deployment. Merging
+to `master` publishes the live site.
+
+## Licences
+
+Font licences are in `licenses/`.
