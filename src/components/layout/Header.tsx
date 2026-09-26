@@ -27,12 +27,15 @@ import { isActiveRoute } from "./routes";
  * The monogram is not laid over the bar — the bar stops where the monogram
  * begins, inset by `--logo-w`. Painting the strip the whole way across would show brown through
  * every counter and gap in the flourish, which is not how the mark is drawn.
- * Beneath all of it, on routes whose content scrolls under the header, the
- * monogram stands on a plate of the page's own colour — without it, book
- * covers would ride up through the mark's open spaces. Routes that are a
- * single fixed screen of artwork skip the plate and show that artwork instead.
  *
- * Paint order is therefore: plate → bar → monogram.
+ * Nothing is painted behind the mark below the bar. The mark is taller than
+ * the strip and hangs over the page; what shows through its open spaces there
+ * is the page itself, which is the overlay the design asks for. A panel big
+ * enough to back the whole mark would be a hard-edged rectangle sitting on top
+ * of the shelf — so the only colour behind the flourish is the bar's own, and
+ * only as far down as the bar's contoured edge goes.
+ *
+ * Paint order is therefore: bar → monogram.
  *
  * Colour is published as two custom properties and inherited by everything
  * inside — the monogram, the links and the language toggle all read the same
@@ -43,12 +46,8 @@ const THEMES = {
     bg: "var(--brand)",
     fg: "var(--foreground)",
     logo: null,
-    plate: "var(--background)",
   },
-  // The bienvenidas poster is light, so the bar flips to match it. No plate:
-  // these two routes are a single screen of artwork that never scrolls under
-  // the header, and any solid colour here would stamp a rectangle over the
-  // poster — exactly what the mark is supposed to sit *in*.
+  // The bienvenidas poster is light, so the bar flips to match it.
   bienvenidas: {
     bg: "#E5E2E2",
     fg: "#4B3B3B",
@@ -56,7 +55,6 @@ const THEMES = {
     // the poster it reads as a watermark, which is the whole effect. So it is
     // named here rather than inheriting `fg`.
     logo: "var(--foreground)",
-    plate: "transparent",
   },
   // Contacto keeps the dark bar but takes the monogram in pink, over its own
   // watermark. Same reasoning as above.
@@ -64,7 +62,6 @@ const THEMES = {
     bg: "var(--brand)",
     fg: "var(--foreground)",
     logo: "#F5C8E8",
-    plate: "transparent",
   },
 } as const;
 
@@ -87,19 +84,10 @@ export function Header() {
           "--hdr-fg": theme.fg,
           // Falls back to the bar's own colour unless a route overrides it.
           "--hdr-logo": theme.logo ?? theme.fg,
-          "--hdr-plate": theme.plate,
         } as CSSProperties
       }
     >
       <div className="relative h-[var(--hdr-h)] text-[var(--hdr-fg)]">
-        {/* The ground the monogram stands on: the page's colour, carried up
-            through the strip and down past it to the full height of the mark.
-            Goes with the monogram below `md`. */}
-        <div
-          aria-hidden
-          className="absolute start-0 top-0 hidden h-[var(--logo-h)] w-[var(--logo-w)] bg-[var(--hdr-plate)] md:block"
-        />
-
         {/* The bar's shaped left end, at natural size — never scaled. Its whole
             job is to weave around the monogram, so on mobile, where there is no
             monogram, it would be a notch cut out of nothing. */}
