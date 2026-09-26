@@ -1,0 +1,76 @@
+{
+  "common": {
+    "brand": "BIEN*VENIDAS",
+    "tagline": "Editorial independiente",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "languageLabel": "Cambiar idioma",
+    "backToCatalogue": "Volver al catálogo",
+    "skipToContent": "Saltar al contenido"
+  },
+  "nav": {
+    "libros": "Libros",
+    "bienvenidas": "Bien*venidas",
+    "contacto": "Contacto"
+  },
+  "metadata": {
+    "title": "BIEN*VENIDAS — Editorial independiente",
+    "description": "Editorial independiente y librería en línea. Libros que llegan, se quedan y se comparten."
+  },
+  "home": {
+    "statement": "Publicamos libros que llegan, se quedan y se comparten.",
+    "intro": "Una editorial independiente dedicada a voces que amplían lo que la literatura puede sostener.",
+    "explore": "Explorar",
+    "sections": {
+      "libros": "El catálogo completo, título a título.",
+      "bienvenidas": "Quiénes somos y por qué publicamos.",
+      "contacto": "Escríbenos: manuscritos, prensa, librerías."
+    }
+  },
+  "libros": {
+    "title": "Libros",
+    "lead": "Nuestro catálogo.",
+    "empty": "Todavía no hay títulos publicados. Los primeros llegan pronto.",
+    "shelfHint": "Estantería: pasa el cursor sobre un libro para ver la portada, haz clic para abrir su ficha.",
+    "openCall": "Convocatoria abierta"
+  },
+  "book": {
+    "notFoundTitle": "Título no encontrado",
+    "notFoundBody": "No encontramos este libro en nuestro catálogo.",
+    "author": "Autoría",
+    "pages": "Páginas",
+    "published": "Publicación",
+    "isbn": "ISBN",
+    "addToCart": "Añadir {title} a la cesta",
+    "added": "Añadido",
+    "addedTo": "{title} añadido a la cesta",
+    "stock": {
+      "in_stock": "Disponible",
+      "low_stock": "Últimos ejemplares",
+      "out_of_stock": "Agotado",
+      "preorder": "Reserva anticipada",
+      "out_of_print": "Descatalogado"
+    }
+  },
+  "bienvenidas": {
+    "title": "Bien*venidas",
+    "lead": "Nuestro manifiesto.",
+    "body": "Esta página recogerá el manifiesto de la editorial, la historia de la casa y los perfiles de quienes la habitan.",
+    "imageAlt": "Mural de BIEN*VENIDAS",
+    "panLabel": "Imagen navegable: arrastra, desplaza o usa las flechas para recorrerla."
+  },
+  "contacto": {
+    "title": "Contacto",
+    "intro": "Para manuscritos, colaboraciones\no cualquier otra petición:",
+    "social": {
+      "instagram": "Instagram",
+      "substack": "Substack",
+      "tiktok": "TikTok"
+    }
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "La página que buscas no existe o cambió de lugar.",
+    "home": "Volver al inicio"
+  }
+}
