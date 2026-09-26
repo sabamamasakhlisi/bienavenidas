@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 
 import { getBookBySlug, localizeBook } from "@/features/catalog/catalog";
+import { getStock } from "@/features/checkout/inventory";
 import { MAX_QUANTITY } from "@/features/checkout/limits";
 import {
   createCheckoutSession,
@@ -19,7 +20,12 @@ export type CheckoutResult =
   | { ok: true; url: string }
   | {
       ok: false;
-      reason: "notConfigured" | "empty" | "unavailable" | "failed";
+      reason:
+        | "notConfigured"
+        | "empty"
+        | "unavailable"
+        | "outOfStock"
+        | "failed";
       /** Lines that can't be bought, so the cart can point at them. */
       slugs?: string[];
     };
@@ -84,6 +90,14 @@ export async function startCheckout(
 
   let url: string;
   try {
+    // Stock is checked here and decremented only once Stripe confirms payment
+    // (see the webhook). Titles without a stock row aren't tracked.
+    const stock = await getStock(items.map((item) => item.slug));
+    const short = items
+      .filter((item) => (stock?.get(item.slug) ?? Infinity) < item.quantity)
+      .map((item) => item.slug);
+    if (short.length > 0) return { ok: false, reason: "outOfStock", slugs: short };
+
     url = await createCheckoutSession({
       items,
       locale,

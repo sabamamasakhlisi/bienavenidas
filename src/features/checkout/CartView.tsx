@@ -13,6 +13,7 @@ type CheckoutFailure =
   | "notConfigured"
   | "empty"
   | "unavailable"
+  | "outOfStock"
   | "failed";
 
 export type CheckoutAction = (
@@ -91,7 +92,9 @@ export function CartView({ checkout }: { checkout: CheckoutAction }) {
                 )}
                 {unavailable.includes(line.slug) && (
                   <span className="ms-3 text-[#F5C8E8]">
-                    {t("unavailableLine")}
+                    {error === "outOfStock"
+                      ? t("outOfStockLine")
+                      : t("unavailableLine")}
                   </span>
                 )}
               </p>

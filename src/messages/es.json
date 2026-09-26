@@ -71,9 +71,11 @@
       "notConfigured": "El pago en línea aún no está activo. Escríbenos a hola@bienavenidas.com para hacer tu pedido.",
       "empty": "Tu cesta está vacía.",
       "unavailable": "Algún título de tu cesta ya no está a la venta. Quítalo y vuelve a intentarlo.",
+      "outOfStock": "No quedan suficientes ejemplares de algún título. Reduce la cantidad o quítalo.",
       "failed": "No pudimos abrir el pago. Inténtalo de nuevo en un momento."
     },
     "unavailableLine": "No disponible",
+    "outOfStockLine": "Sin ejemplares suficientes",
     "thanksTitle": "¡Gracias!",
     "thanksBody": "Hemos recibido tu pedido. Te llegará un recibo por correo{email, select, none {} other { a {email}}}.",
     "thanksTotal": "Total pagado: {total}",

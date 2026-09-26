@@ -71,9 +71,11 @@
       "notConfigured": "Online payment isn't live yet. Write to hola@bienavenidas.com to place your order.",
       "empty": "Your cart is empty.",
       "unavailable": "A title in your cart is no longer for sale. Remove it and try again.",
+      "outOfStock": "There aren't enough copies left of a title. Lower the quantity or remove it.",
       "failed": "We couldn't open checkout. Please try again in a moment."
     },
     "unavailableLine": "Unavailable",
+    "outOfStockLine": "Not enough copies",
     "thanksTitle": "Thank you!",
     "thanksBody": "We've received your order. A receipt is on its way{email, select, none {} other { to {email}}}.",
     "thanksTotal": "Total paid: {total}",
