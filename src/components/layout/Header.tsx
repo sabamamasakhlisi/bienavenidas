@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
 
+import { CartLink } from "@/features/checkout/CartLink";
+
 import { LanguageSelector } from "./LanguageSelector";
 import { Logo } from "./Logo";
 import { MobileNav } from "./MobileNav";
@@ -16,7 +18,7 @@ import { isActiveRoute } from "./routes";
  * Note this mirrors the original written brief: the design puts the monogram at
  * the start and the language toggle at the end, not the other way round.
  *
- *   start → monogram | centre → navigation | end → es/en
+ *   start → monogram | centre → navigation | end → cart, es/en
  *
  * The bar itself is a thin strip; the monogram is deliberately taller than the
  * bar and hangs over the page below it, so the header wrapper cannot clip its
@@ -123,7 +125,10 @@ export function Header() {
           <NavLinks className="hidden justify-self-center md:block" />
           <MobileNav className="justify-self-center md:hidden" />
 
-          <LanguageSelector className="justify-self-end" />
+          <div className="flex items-center gap-5 justify-self-end md:gap-8">
+            <CartLink active={isActiveRoute(pathname, "/carrito")} />
+            <LanguageSelector />
+          </div>
         </div>
 
         {/* Overhangs the bar, so it lives outside the grid and above the page.
