@@ -33,10 +33,26 @@ const switzer = localFont({
   variable: "--font-switzer",
 });
 
+/**
+ * Absolute origin for canonical links. `NEXT_PUBLIC_SITE_URL` wins when set;
+ * otherwise Vercel's production domain, which it exposes on every deployment
+ * (previews included, so a preview never claims to be the canonical copy).
+ */
+function siteUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL);
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return new URL(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
+  return undefined;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
 
   return {
+    metadataBase: siteUrl(),
     title: t("title"),
     description: t("description"),
   };
