@@ -17,6 +17,9 @@ export default async function BienvenidasPage() {
         width={2966}
         height={4200}
         label={t("panLabel")}
+        // Sampled from the poster's own corners and edge midpoints, which sit
+        // between #c7c7c7 and #d0d0d0.
+        background="#cfcfcf"
       />
     </>
   );

@@ -217,7 +217,7 @@ export function Shelf({
   return (
     <section
       aria-label={hint}
-      className="relative flex h-[calc(100svh-2.25rem)] flex-col justify-end overflow-hidden"
+      className="relative flex h-[calc(100svh-var(--hdr-h))] flex-col justify-end overflow-hidden"
     >
       <div
         ref={rowRef}

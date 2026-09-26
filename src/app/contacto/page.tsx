@@ -20,7 +20,7 @@ export default async function ContactoPage() {
   const t = await getTranslations("contacto");
 
   return (
-    <section className="relative flex min-h-[calc(100svh-2.25rem)] flex-col items-center justify-center overflow-hidden bg-[#E5E2E2] px-6 text-[#4B3B3B]">
+    <section className="relative mt-[calc(var(--hdr-h)*-1)] flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#E5E2E2] px-6 text-[#4B3B3B]">
       {/* The monogram again, blown up past the edges of the page as a
           watermark. Barely lighter than the ground it sits on — it should read
           as texture, not as a second logo. */}

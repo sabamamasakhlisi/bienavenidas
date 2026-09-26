@@ -21,6 +21,7 @@ export function PannableImage({
   width,
   height,
   label,
+  background,
 }: {
   /** Fallback source. Always a format every browser can decode. */
   src: string;
@@ -31,6 +32,12 @@ export function PannableImage({
   width: number;
   height: number;
   label: string;
+  /**
+   * The image's own ground colour. Painted under the frame so the section
+   * never flashes the site's near-black while a very large asset decodes —
+   * which shows through the header monogram's open spaces.
+   */
+  background?: string;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -140,7 +147,11 @@ export function PannableImage({
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onKeyDown={onKeyDown}
-      className="relative h-[calc(100svh-2.25rem)] w-full cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground"
+      style={background ? { backgroundColor: background } : undefined}
+      // Full height, lifted under the header rather than starting below it:
+      // the bar's shaped end cuts notches that are supposed to show the poster,
+      // and they can only do that if the poster reaches up behind the strip.
+      className="relative mt-[calc(var(--hdr-h)*-1)] h-[100svh] w-full cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground"
     >
       <div
         ref={canvasRef}
