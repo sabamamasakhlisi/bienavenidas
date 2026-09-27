@@ -31,7 +31,7 @@ export default async function BienvenidasPage() {
       <h1 className="sr-only">{t("title")}</h1>
 
       <PannableImage
-        src="/poster_bienavenidas.jpg"
+        src="/poster_bienavenidas.webp"
         avifSrc="/poster_bienavenidas.avif"
         webpSrc="/poster_bienavenidas.webp"
         alt={t("imageAlt")}
