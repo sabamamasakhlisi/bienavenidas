@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 
+import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { CartProvider } from "@/features/checkout/cart";
 import { dirFor, isLocale, defaultLocale } from "@/i18n/config";
@@ -74,12 +75,13 @@ export default async function RootLayout({
       dir={dirFor(resolved)}
       className={`${baskervvol.variable} ${switzer.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="relative flex min-h-full flex-col">
         {/* Locale and messages are inherited from the server render. */}
         <NextIntlClientProvider>
           <CartProvider>
             <Header />
             <main className="flex-1">{children}</main>
+            <Footer />
           </CartProvider>
         </NextIntlClientProvider>
       </body>
