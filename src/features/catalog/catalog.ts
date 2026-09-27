@@ -27,6 +27,10 @@ const books: Book[] = [
     coverTone: "#4a3a3d",
     coverAspect: 0.633,
     shelfWidth: 300,
+    // Proportion of `joven-chica.spine.*`. The shelf sizes the spine from this
+    // and the height the book stands at, so the printed title is never cropped
+    // — correct it here if `pnpm covers` reports a different ratio.
+    spineAspect: 0.054,
     translations: {
       es: {
         quote:
@@ -51,10 +55,15 @@ const books: Book[] = [
     ],
     description:
       "Dedicated 2 all bittersweet scrollers, always caretaking, 4ever and never notification-on-mute, grass-touching lovers/haters of the internet. <3",
+    quote:
+      "Beneath artificial branches, the witches hide in data dust, brewing poison to fight for digital existence. They attract, disturb, remix, poison, hex and hack their web back, informing all allied witches: the glitches in totalitarian binary systems. Their knowledge is threatened by alt-right techno-capitalist standards and eugenic fetishization of power. They embrace the gaps, claiming information from chaos, not quality. Witches are back, by glitching, memeing, poisoning, becoming unreadable; they rule the web. About (digital) caring, weaving, computing, and today's condition of constant algorithmic nurture and its techno-feudalist effects on our tender existence.",
     price: { amount: 2000, currency: "EUR" },
     // Still in the making: the entry announces it and takes notice-me mail
     // instead of offering a price.
     stock: "coming_soon",
+    // And the cover isn't finished, so the entry artwork stands in for it
+    // everywhere until it is.
+    coverPending: true,
     pageCount: 148,
     publishedAt: "2026-01-01",
     credits: "cc. 2026 Veronica Obenauer\nPrimera edición",
@@ -62,21 +71,16 @@ const books: Book[] = [
     coverTone: "#dedbd5",
     coverAspect: 0.666,
     shelfWidth: 225,
+    // No spine artwork exists yet, and the file that did showed a slice of the
+    // unfinished cover. Until there is one, the shelf cuts a strip from the
+    // entry image instead — the same width the real spine had, so the shelf's
+    // rhythm doesn't change when the proper art arrives.
     spineAspect: 0.184,
-    spineWidth: 62,
+    spineFrom: "witches-used-to-rule-the-web.detail",
     shelfLean: -3,
-    translations: {
-      en: {
-        quote:
-          "If we have to imagine a cult full of witches, we catch ourselves getting trapped by a stereotypical image mostly provided by common pop culture and traditional fairy tales. Maybe our witch is an elderly woman, wearing a pointy black hat coated with an iridescent glimmer. Her skin is tinted in a shade of green—the exact shade of green that would display discharged snoot on a clean tissue in a cartoon. Our witch has a big wart on the left side of her nose. Her laugh sounds rather evil, as she pours a muddy juice into a big rusty enamel pot, while being accompanied by a skinny black cat which is crawling up her shoulder. The scraggly cat emits a high-pitched screech, which most could identify as a scratchy type of meowing. Hiding in a wooden cottage in the hollows of a dark forest, it is their witch's goal to poison mankind and bewitch the pretty ones in envy of their own ugliness. And if there was any kind of supernatural happening, it never wore a pointy hat.",
-      },
-      es: {
-        description:
-          "Dedicado a todas las scrollers agridulces, siempre cuidando, por siempre y nunca con las notificaciones en silencio, amantes/enemigas de internet que tocan el césped. <3",
-        quote:
-          "Si tenemos que imaginar un aquelarre lleno de brujas, nos descubrimos atrapadas en una imagen estereotipada servida por la cultura pop y los cuentos de siempre. Quizá nuestra bruja sea una anciana con un sombrero puntiagudo negro cubierto de un brillo iridiscente. Su piel tiene un tono verde: exactamente el verde de un moco descargado sobre un pañuelo limpio en un dibujo animado. Nuestra bruja tiene una verruga grande en el lado izquierdo de la nariz. Su risa suena más bien malvada mientras vierte un jugo turbio en una olla de esmalte oxidada, acompañada por un gato negro y flaco que le trepa por el hombro. Escondida en una cabaña de madera en las hondonadas de un bosque oscuro, la meta de esa bruja es envenenar a la humanidad y hechizar a las bonitas por envidia de su propia fealdad. Y si alguna vez ocurrió algo sobrenatural, nunca llevó sombrero puntiagudo.",
-      },
-    },
+    // No translations: the book is written in English and reads in English
+    // here, whichever language the interface is in. Only the chrome around it
+    // — "Próximamente", "Avísame" — follows the reader.
   },
   {
     slug: "open-call-sad-girls",
@@ -94,6 +98,11 @@ const books: Book[] = [
     coverTone: "#e3c4d8",
     coverAspect: 0.746,
     shelfWidth: 310,
+    // Measured from `open-call-sad-girls.spine.webp` (127x1440). Authored to
+    // match the file exactly: any other number makes the box a different shape
+    // from the picture, and `object-cover` pays for that by trimming the ends
+    // off the ornament.
+    spineAspect: 0.0882,
     translations: {
       en: {
         description:
@@ -176,7 +185,7 @@ export function localizeBook(book: Book, locale: Locale) {
     title: translation?.title ?? book.title,
     subtitle: translation?.subtitle ?? book.subtitle,
     description: translation?.description ?? book.description,
-    quote: translation?.quote ?? "",
+    quote: translation?.quote ?? book.quote ?? "",
   };
 }
 

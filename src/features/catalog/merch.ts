@@ -18,6 +18,7 @@ const merch: Merch[] = [
     // The photograph is very nearly square; `object-contain` keeps the whole
     // shirt in frame, so this only reserves the right box before it loads.
     imageAspect: 0.964,
+    imageTilt: -9.31,
     // Between the two books, where the design puts it.
     after: "joven-chica",
     // Each size is its own sellable slug, and its own row in `stock`.

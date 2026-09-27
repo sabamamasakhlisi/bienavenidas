@@ -22,14 +22,18 @@ export type BookView = {
   isOpenCall: boolean;
   isComingSoon: boolean;
   isSoldOut: boolean;
-  /** Pre-resolved, because `Reader` has only the `libros` namespace. */
-  soldOutLabel: string;
+  /**
+   * This title's own stock status, already translated — "Próximamente",
+   * "Agotado", and so on. Pre-resolved because `Reader` has only the `libros`
+   * namespace.
+   */
+  stockLabel: string;
 };
 
 export function toView(
   book: Book,
   locale: Locale,
-  soldOutLabel: string,
+  stockLabel: string,
 ): BookView {
   const { title, description, quote } = localizeBook(book, locale);
 
@@ -47,7 +51,7 @@ export function toView(
     isComingSoon: book.stock === "coming_soon",
     // Live, from the shop's own count — not the catalogue's static status.
     isSoldOut: book.stock === "out_of_stock" || book.stock === "out_of_print",
-    soldOutLabel,
+    stockLabel,
   };
 }
 
@@ -69,6 +73,8 @@ export type MerchView = {
   credits?: string;
   image?: ImageRef;
   imageAspect: number;
+  /** Degrees the photo is turned. See `Merch.imageTilt`. */
+  imageTilt?: number;
   variants: MerchVariantView[];
   /** Pre-resolved, as for books: the section has only its own namespace. */
   soldOutLabel: string;
@@ -95,6 +101,7 @@ export function toMerchView(
     credits,
     image: item.image,
     imageAspect: item.imageAspect ?? 1,
+    imageTilt: item.imageTilt,
     soldOutLabel,
     variants: item.variants.map((variant) => {
       const price = variantPrice(item, variant);

@@ -72,6 +72,7 @@ body {
   font-family: var(--font-baskervvol);
   line-height: 1.5;
   text-wrap: pretty;
+  color: var(--accent);
 }
 
 /*
@@ -110,7 +111,9 @@ body {
  */
 .merch-layout {
   display: grid;
-  gap: 0.75rem 0.5rem;
+  /* The column gap leaves room for the tilted photo, which overhangs its own
+     box by about 8px at this size; at 0.5rem it grazed the text beside it. */
+  gap: 0.75rem 0.75rem;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto 1fr auto auto;
   grid-template-areas:
@@ -225,5 +228,26 @@ body:has([data-ground="poster"]) {
 @starting-style {
   .cart-sheet[open]::backdrop {
     opacity: 0;
+  }
+}
+
+/*
+ * A spine's lean.
+ *
+ * Two values rather than one, because the row's ends are not the same items at
+ * every width: the piece that opens a wide shelf is also the piece that opens
+ * a phone's, and it stands square on one and leans on the other. An inline
+ * `transform` could not be overridden by a media query, so the angle travels
+ * as a custom property and the rule does the choosing.
+ */
+.shelf-spine {
+  transform: rotate(var(--lean, 0deg));
+}
+
+@media (min-width: 768px) {
+  .shelf-spine {
+    transform: rotate(var(--lean-md, var(--lean, 0deg)));
+    /* Room for a leaning spine's foot to stand clear of its neighbour. */
+    margin-inline-start: var(--foot-md, 0px);
   }
 }

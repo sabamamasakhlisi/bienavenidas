@@ -73,6 +73,13 @@ export type Book = {
   subtitle?: string;
   authors: Author[];
   description: string;
+  /**
+   * Pull-quote shown beside the entry, in the language the book is written in.
+   *
+   * A base, as `title` and `description` are: a translation overrides it where
+   * one exists, and a title read in its original language simply has none.
+   */
+  quote?: string;
   price: Price;
   stock: StockStatus;
   pageCount: number;
@@ -82,9 +89,18 @@ export type Book = {
   /**
    * Shown in the book's own entry instead of the cover, when the two differ —
    * a title still in the making may have artwork to show before it has a
-   * finished cover. The shelf keeps using the cover either way.
+   * finished cover.
    */
   detailImage?: ImageRef;
+  /**
+   * The cover art isn't final, so it should not be seen anywhere yet.
+   *
+   * With this set the entry's own image stands in for the cover everywhere a
+   * cover is drawn — the shelf, the pointer follower, the detail page and the
+   * card that link previews scrape. Remove it when the real cover lands and
+   * every one of those picks the cover up again, with no other change.
+   */
+  coverPending?: boolean;
   collection?: string;
   /** Colophon lines exactly as set in the design (newline separated). */
   credits?: string;
@@ -100,6 +116,22 @@ export type Book = {
   spineImage?: ImageRef;
   /** Spine proportion as width ÷ height — much narrower than a cover. */
   spineAspect?: number;
+  /**
+   * Draws the spine from a different picture, cropped to spine proportions.
+   *
+   * For a title with no spine artwork of its own: name another file's stem
+   * (e.g. `"my-book.detail"`) and the shelf shows a strip of it instead of the
+   * flat colour. Unlike real spine art the shape is not taken from the file —
+   * `spineAspect` decides how wide the strip is, and the picture is cropped to
+   * fit. Drop it when a proper spine arrives.
+   */
+  spineFrom?: string;
+  /**
+   * Which part of `spineFrom` the strip is cut from. Any CSS `object-position`
+   * — "left", "center", "70% 0", and so on. Defaults to the left edge, where
+   * a spine sits on a cover wrap.
+   */
+  spineFocus?: string;
   /** How wide the spine stands on the shelf, in px before the shelf scales it. */
   spineWidth?: number;
   /** How wide the open cover stands, in px before the shelf scales it. */
