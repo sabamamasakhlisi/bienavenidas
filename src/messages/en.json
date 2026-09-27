@@ -74,19 +74,7 @@
     "remove": "Remove",
     "removeLabel": "Remove {title} from the cart",
     "subtotal": "Subtotal",
-    "shipping": {
-      "legend": "Where should we send it?",
-      "zones": {
-        "es": "Spain",
-        "eu": "Another EU country"
-      },
-      "methods": {
-        "ordinario": "Standard shipping within Spain",
-        "certificado": "Registered shipping within Spain",
-        "eu": "EU shipping"
-      }
-    },
-    "shippingNote": "Shipping to Spain and the EU, added at checkout. Secure payment with Stripe.",
+    "shippingNote": "Shipping to Spain and the EU. Secure payment with Stripe.",
     "checkout": "Checkout",
     "redirecting": "Opening checkout…",
     "errors": {

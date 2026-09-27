@@ -1,7 +1,7 @@
 -- Shipping on each order: which method the buyer chose and what it cost.
 --
--- Rates depend on the destination and are managed as shipping rates in the
--- Stripe dashboard (see `src/features/checkout/shipping.ts`).
+-- Rates are managed as shipping rates in the Stripe dashboard, and the buyer
+-- picks one on Stripe's checkout page.
 -- `amount_total` already includes the shipping; `shipping_cost` says how much
 -- of it was shipping, and `shipping_method` says how to post the parcel.
 
