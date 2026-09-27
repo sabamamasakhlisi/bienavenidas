@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 
 import { CatalogPage } from "@/features/catalog/CatalogPage";
-import { CONTACT_EMAIL, SITE_NAME, absoluteUrl, jsonLd } from "@/lib/site";
+import {
+  ABOUT,
+  CONTACT_EMAIL,
+  SITE_NAME,
+  absoluteUrl,
+  jsonLd,
+} from "@/lib/site";
 
 import { startCheckout } from "./carrito/actions";
 
@@ -26,6 +32,15 @@ export default function Home() {
             url: absoluteUrl("/"),
             logo: absoluteUrl("/apple-icon.png"),
             email: CONTACT_EMAIL,
+            description: ABOUT,
+            location: ["Madrid", "Barcelona"].map((city) => ({
+              "@type": "Place",
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: city,
+                addressCountry: "ES",
+              },
+            })),
           }),
         }}
       />

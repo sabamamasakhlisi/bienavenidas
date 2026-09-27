@@ -89,3 +89,11 @@ export function openGraphFor({
  * The shop's tax ID, for the legal pages.
  */
 export const OWNER_NIF = "71955193S";
+
+/**
+ * Who BIEN*VENIDAS is, in their own words. Read by search engines through the
+ * Organization structured data on the home page; not shown on any page.
+ */
+export const ABOUT =
+  "Bien*venidas es un refugio, de una de tres y de todas, un espacio compartido en el que buscamos amparar esas historias y realidades que, desordenadas y descentralizadas, le tiendan la mano a nuestras lectoras y piquen su curiosidad lo justo para seguir leyendo. Existiendo a través de la imperfección, creamos nuestro propio lenguaje a pesar del sistema. " +
+  "Con presencia tanto en Madrid como en Barcelona, esta editorial independiente busca compartir a través de sus publicaciones una selección no exhaustiva de investigaciones, ensayos, reflexiones y sentimientos.";
