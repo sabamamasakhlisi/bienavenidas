@@ -99,7 +99,14 @@ export function Header() {
           fill="currentColor"
           className="absolute start-0 top-0 hidden text-[var(--hdr-bg)] md:block"
         >
-          <path d="M0 0H147V28L132 14.5H103.5L94 30.5L73.5 28L46.5 39L40 36.5L26.5 28L8 19L0 15.5Z" />
+          {/* The notch's right vertex is at 135, not the 132 it was drawn at:
+              the diagonal running from there to (147,28) used to clip the
+              inside of the flourish's upper-right counter, leaving about one
+              square pixel of bar colour walled in by the mark — a brown speck
+              in the middle of the monogram. Measured against the real artwork,
+              132 traps 1.4px² and 134 traps none; 135 keeps a pixel in hand
+              for subpixel rounding at other device ratios. */}
+          <path d="M0 0H147V28L135 14.5H103.5L94 30.5L73.5 28L46.5 39L40 36.5L26.5 28L8 19L0 15.5Z" />
         </svg>
 
         {/* The plain remainder. Overlaps the shape by a pixel so no seam

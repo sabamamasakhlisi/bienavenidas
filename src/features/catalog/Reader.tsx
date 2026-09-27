@@ -263,9 +263,7 @@ export function Reader({
                     onClick={() => setChosen(isOpen ? null : view.book.slug)}
                     // Buttons are centred by the UA stylesheet, which beats
                     // the alignment inherited from the block — so state it.
-                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] ${
-                      onLeft ? "text-start" : "text-end"
-                    }`}
+                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] text-start`}
                   >
                     {view.quote}
                   </button>

@@ -65,6 +65,7 @@
   },
   "cart": {
     "title": "Cesta",
+    "close": "Cerrar",
     "link": "Cesta, {count, plural, =0 {vacía} one {# libro} other {# libros}}",
     "empty": "Tu cesta está vacía.",
     "browse": "Ver libros",

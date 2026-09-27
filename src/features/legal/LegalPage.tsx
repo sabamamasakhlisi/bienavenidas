@@ -20,7 +20,16 @@ export function LegalPage({
   children: ReactNode;
 }) {
   return (
-    <section className="relative isolate mt-[calc(var(--hdr-h)*-1)] min-h-[100svh] overflow-hidden bg-[#E5E2E2] px-6 pt-[calc(var(--hdr-h)+5rem)] pb-24 text-[#4B3B3B]">
+    <section
+      data-ground="light"
+      // No `min-h-[100svh]`: the section is one screen tall *and* the footer
+      // stacks below it, which leaves every short legal page with a vestigial
+      // scroll exactly the footer's height — you drag, the footer slides up,
+      // it stops. The body is already `min-h-full flex-col` with `main` as
+      // `flex-1`, so the page fills the window without being told to, and any
+      // slack under the text is the canvas, which is this same ground.
+      className="relative isolate mt-[calc(var(--hdr-h)*-1)] overflow-hidden bg-[#E5E2E2] px-6 pt-[calc(var(--hdr-h)+5rem)] pb-24 text-[#4B3B3B]"
+    >
       <Logo
         decorative
         className="pointer-events-none fixed top-1/2 left-1/2 -z-10 w-[150vw] min-w-[1100px] -translate-x-1/2 -translate-y-1/2 text-[#EFEDEC]"

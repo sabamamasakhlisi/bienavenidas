@@ -139,6 +139,10 @@ export function PannableImage({
   return (
     <div
       ref={frameRef}
+      // Tells the canvas what colour to bounce in. See `body:has(...)` in
+      // globals.css: the overscroll strip is painted from the body, not from
+      // here, so it has to be told.
+      data-ground="poster"
       role="application"
       aria-label={label}
       tabIndex={0}

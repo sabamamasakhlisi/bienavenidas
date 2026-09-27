@@ -141,3 +141,89 @@ body {
 .merch-layout > * {
   align-self: start;
 }
+
+/*
+ * What the overscroll bounce reveals.
+ *
+ * A browser paints the strip you drag past the end of a page with the *body's*
+ * background, never the page's own. The site is dark, so a light page rubber-
+ * banded on a trackpad or a phone flashes near-black above and below itself —
+ * visible for exactly as long as the drag, which is what makes it read as a
+ * glitch rather than a colour.
+ *
+ * So a page that isn't drawn on the site's own ground says so, and the canvas
+ * follows it. Not `overscroll-behavior: none`: the bounce is the platform's,
+ * and worth keeping once it stops flashing the wrong colour.
+ */
+body:has([data-ground="light"]) {
+  background: #e5e2e2;
+}
+
+body:has([data-ground="poster"]) {
+  background: #cfcfcf;
+}
+
+/*
+ * The cart panel slides in from the inline end.
+ *
+ * The closed state lives on the element itself and the open state overrides
+ * it, so the panel has an explicit value in both — a zero written as a
+ * standalone `translate: 0 0` is dropped as a no-op by the CSS optimiser,
+ * which leaves the opening frame with nothing to travel towards and strands
+ * the panel off-screen. `translate: 0% 0%` survives that.
+ *
+ * `@starting-style` gives the opening frame; `transition-behavior: allow-
+ * discrete` keeps `display` around long enough for the closing one. A browser
+ * without either simply shows and hides it, which is the same panel without
+ * the travel.
+ */
+.cart-sheet {
+  translate: 100% 0;
+  opacity: 0;
+  transition:
+    translate 220ms ease,
+    opacity 220ms ease,
+    overlay 220ms allow-discrete,
+    display 220ms allow-discrete;
+}
+
+.cart-sheet[open] {
+  translate: 0% 0%;
+  opacity: 1;
+}
+
+@starting-style {
+  .cart-sheet[open] {
+    translate: 100% 0;
+    opacity: 0;
+  }
+}
+
+/* Mirrors with the document, so an RTL locale would slide from the left. */
+[dir="rtl"] .cart-sheet {
+  translate: -100% 0;
+}
+
+@starting-style {
+  [dir="rtl"] .cart-sheet[open] {
+    translate: -100% 0;
+  }
+}
+
+.cart-sheet::backdrop {
+  opacity: 0;
+  transition:
+    opacity 220ms ease,
+    overlay 220ms allow-discrete,
+    display 220ms allow-discrete;
+}
+
+.cart-sheet[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .cart-sheet[open]::backdrop {
+    opacity: 0;
+  }
+}
