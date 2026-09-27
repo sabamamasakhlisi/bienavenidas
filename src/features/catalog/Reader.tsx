@@ -4,7 +4,6 @@ import { Fragment, useRef, useState, type ReactNode } from "react";
 
 import { useTranslations } from "next-intl";
 
-import type { CheckoutAction } from "@/features/checkout/CartView";
 import { useCart } from "@/features/checkout/cart";
 
 import { AddToCart } from "./AddToCart";
@@ -43,14 +42,12 @@ export function Reader({
   layout,
   intro,
   shelfHint,
-  checkout,
   afterEntry,
 }: {
   views: BookView[];
   layout: ShelfItem[];
   intro: readonly string[];
   shelfHint: string;
-  checkout: CheckoutAction;
   /**
    * Sections to drop in below a given entry, by slug.
    *
@@ -173,7 +170,6 @@ export function Reader({
               item={view.book}
               title={view.title}
               price={view.price}
-              checkout={checkout}
             />
           );
 

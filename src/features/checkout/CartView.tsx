@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCart } from "./cart";
 import { MAX_QUANTITY } from "./limits";
 import { formatMoney } from "./money";
+import { SHIPPING_METHODS, SHIPPING_ZONES, type ShippingZone } from "./shipping";
 
 type CheckoutFailure =
   | "notConfigured"
@@ -18,6 +19,7 @@ type CheckoutFailure =
 
 export type CheckoutAction = (
   request: { slug: string; quantity: number }[],
+  zone: ShippingZone,
 ) => Promise<
   | { ok: true; url: string }
   | { ok: false; reason: CheckoutFailure; slugs?: string[] }
@@ -47,6 +49,7 @@ export function CartView({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<CheckoutFailure | null>(null);
   const [unavailable, setUnavailable] = useState<string[]>([]);
+  const [zone, setZone] = useState<ShippingZone>("es");
 
   /**
    * Asks the shop about this cart as soon as it is on screen, and again
@@ -101,6 +104,7 @@ export function CartView({
     startTransition(async () => {
       const result = await checkout(
         lines.map(({ slug, quantity }) => ({ slug, quantity })),
+        zone,
       );
 
       if (result.ok) {
@@ -218,6 +222,46 @@ export function CartView({
             {formatMoney({ amount: total, currency }, locale)}
           </span>
         </p>
+
+        {/* Stripe's page can't price shipping by the address typed into it,
+            so the zone is chosen here and the session is opened for it. */}
+        <fieldset className="flex flex-col items-end gap-2">
+          <legend className="mb-2 text-[13px] text-muted">
+            {t("shipping.legend")}
+          </legend>
+          <div className="flex flex-wrap justify-end gap-2">
+            {SHIPPING_ZONES.map((option) => (
+              <label
+                key={option}
+                className="cursor-pointer border border-foreground/30 px-4 py-2 text-[13px] has-checked:border-foreground has-checked:bg-brand has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-foreground"
+              >
+                <input
+                  type="radio"
+                  name="shipping-zone"
+                  value={option}
+                  checked={zone === option}
+                  onChange={() => setZone(option)}
+                  className="sr-only"
+                />
+                {t(`shipping.zones.${option}`)}
+              </label>
+            ))}
+          </div>
+          <ul className="mt-1 text-[12px] text-muted">
+            {SHIPPING_METHODS[zone].map((method) => (
+              <li key={method.id} className="tabular-nums">
+                {t(`shipping.methods.${method.id}`)}:{" "}
+                {formatMoney({ amount: method.amount, currency: "EUR" }, locale)}
+              </li>
+            ))}
+          </ul>
+          {SHIPPING_METHODS[zone].length > 1 && (
+            <p className="text-[12px] text-muted">
+              {t("shipping.chooseAtCheckout")}
+            </p>
+          )}
+        </fieldset>
+
         <p className="max-w-[40ch] text-[12px] text-muted">
           {t("shippingNote")}
         </p>

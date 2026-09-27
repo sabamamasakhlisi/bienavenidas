@@ -178,6 +178,10 @@ export type NewOrder = {
   items: OrderItem[];
   amountTotal: number;
   currency: string;
+  /** `ordinario`, `certificado` or `eu` (see `shipping.ts`). */
+  shippingMethod: string | null;
+  /** What the buyer paid for shipping, minor units, included in the total. */
+  shippingCost: number | null;
   /** The stock hold this payment settles, from the session's metadata. */
   reservation: string | null;
 };
@@ -248,6 +252,8 @@ export async function recordOrder(order: NewOrder): Promise<boolean> {
     p_amount_total: order.amountTotal,
     p_currency: order.currency,
     p_reservation: order.reservation,
+    p_shipping_method: order.shippingMethod,
+    p_shipping_cost: order.shippingCost,
   });
   if (error) throw error;
   return data === true;
