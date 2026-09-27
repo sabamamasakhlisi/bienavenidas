@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 
 import { getLocale } from "next-intl/server";
 
-import { getBookBySlug, localizeBook } from "@/features/catalog/catalog";
+import { getSellableBySlug } from "@/features/catalog/sellable";
 import {
   getInventory,
   releaseStock,
@@ -80,6 +80,9 @@ function mergeLines(request: CheckoutRequest): CheckoutRequest {
  * to import the other. Only slugs and quantities are trusted from the client;
  * every price and name is looked up again here.
  *
+ * What a slug names — a book, or one size of a t-shirt — is `getSellableBySlug`'s
+ * problem, not this function's. Everything below works in slugs alone.
+ *
  * Price comes from the shop's own record in Supabase where that title has one,
  * and from the catalogue where it doesn't — so a price can be changed without
  * a deploy, and a title nobody has priced there still sells at its catalogue
@@ -112,26 +115,26 @@ async function priceCart(
   for (const line of request) {
     const slug = typeof line?.slug === "string" ? line.slug : "";
     const quantity = line?.quantity;
-    const book = slug ? await getBookBySlug(slug) : undefined;
+    const sellable = slug ? await getSellableBySlug(slug, locale) : undefined;
     const live = inventory?.get(slug)?.price ?? null;
-    const amount = live ?? book?.price.amount ?? 0;
+    const amount = live ?? sellable?.price.amount ?? 0;
 
-    if (book && log) {
+    if (sellable && log) {
       console.log(
         `[checkout] ${slug}: charging ${amount} (${
           live === null ? "catalogue — no price in Supabase" : "from Supabase"
         }${
-          live !== null && live !== book.price.amount
-            ? `, catalogue says ${book.price.amount}`
+          live !== null && live !== sellable.price.amount
+            ? `, catalogue says ${sellable.price.amount}`
             : ""
         })`,
       );
     }
 
     if (
-      !book ||
+      !sellable ||
       amount <= 0 ||
-      UNBUYABLE.has(book.stock) ||
+      UNBUYABLE.has(sellable.stock) ||
       !Number.isInteger(quantity) ||
       quantity < 1 ||
       quantity > MAX_QUANTITY
@@ -141,11 +144,11 @@ async function priceCart(
     }
 
     items.push({
-      slug: book.slug,
-      isbn: book.isbn,
-      name: localizeBook(book, locale).title,
+      slug: sellable.slug,
+      isbn: sellable.isbn,
+      name: sellable.title,
       amount,
-      currency: book.price.currency,
+      currency: sellable.price.currency,
       quantity,
     });
   }

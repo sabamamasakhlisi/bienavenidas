@@ -60,6 +60,9 @@
       "out_of_print": "Out of print"
     }
   },
+  "merch": {
+    "chooseSize": "Choose your size"
+  },
   "cart": {
     "title": "Cart",
     "link": "Cart, {count, plural, =0 {empty} one {# book} other {# books}}",

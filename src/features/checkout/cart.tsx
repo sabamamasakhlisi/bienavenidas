@@ -9,9 +9,21 @@ import {
   type ReactNode,
 } from "react";
 
-import type { Book, Currency } from "@/types/book";
+import type { Currency, Price } from "@/types/book";
 
 import { MAX_QUANTITY } from "./limits";
+
+/**
+ * The least an item must be to go in the cart.
+ *
+ * A slug and a price — not a `Book`, because a t-shirt size is neither a book
+ * nor pretending to be one. Nothing else about the item survives past this
+ * point anyway: checkout re-looks-up every line on the server by slug.
+ */
+export type CartItem = {
+  slug: string;
+  price: Price;
+};
 
 export type CartLine = {
   slug: string;
@@ -31,7 +43,7 @@ type CartValue = {
   count: number;
   /** Total in minor units. Kept integer end to end — never round through floats. */
   total: number;
-  add: (book: Book, title: string) => void;
+  add: (item: CartItem, title: string) => void;
   setQuantity: (slug: string, quantity: number) => void;
   remove: (slug: string) => void;
   clear: () => void;
@@ -127,12 +139,12 @@ function clamp(quantity: number) {
 export function CartProvider({ children }: { children: ReactNode }) {
   const lines = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const add = useCallback((book: Book, title: string) => {
+  const add = useCallback((item: CartItem, title: string) => {
     update((current) => {
-      const existing = current.find((line) => line.slug === book.slug);
+      const existing = current.find((line) => line.slug === item.slug);
       if (existing) {
         return current.map((line) =>
-          line.slug === book.slug
+          line.slug === item.slug
             ? { ...line, quantity: clamp(line.quantity + 1) }
             : line,
         );
@@ -141,10 +153,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [
         ...current,
         {
-          slug: book.slug,
+          slug: item.slug,
           title,
-          amount: book.price.amount,
-          currency: book.price.currency,
+          amount: item.price.amount,
+          currency: item.price.currency,
           quantity: 1,
         },
       ];

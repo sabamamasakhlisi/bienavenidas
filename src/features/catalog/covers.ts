@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import type { Book } from "@/types/book";
+import type { Merch } from "@/types/merch";
 
 /**
  * Resolves cover art from disk.
@@ -15,10 +16,13 @@ import type { Book } from "@/types/book";
  *   <slug>.spine.<ext>   the closed book standing on the shelf
  *   <slug>.detail.<ext>  shown in the book's own entry instead of the cover
  *
+ * Merch art works the same way from `public/merch/`, keyed by the item's slug.
+ *
  * Server-only: this touches `node:fs`, so it must never be imported from a
  * component marked `"use client"`.
  */
 const COVERS_DIR = path.join(process.cwd(), "public", "covers");
+const MERCH_DIR = path.join(process.cwd(), "public", "merch");
 
 /** Most efficient first — whatever `pnpm covers` produced, or the original. */
 const EXTENSIONS = ["avif", "webp", "jpg", "jpeg", "png"] as const;
@@ -26,6 +30,14 @@ const EXTENSIONS = ["avif", "webp", "jpg", "jpeg", "png"] as const;
 /** Nominal intrinsic size. CSS does the real sizing; only the ratio matters. */
 const NOMINAL_WIDTH = 1200;
 
+/**
+ * Two near-identical lookups rather than one taking the directory.
+ *
+ * Deliberate: the build traces `path.join` statically, and a joined path whose
+ * base is a parameter is one it cannot resolve — so it gives up and traces the
+ * entire project into the server bundle. Each base has to be a constant the
+ * tracer can see, which is what keeps these apart.
+ */
 function findFile(stem: string) {
   for (const ext of EXTENSIONS) {
     const file = `${stem}.${ext}`;
@@ -34,9 +46,17 @@ function findFile(stem: string) {
   return undefined;
 }
 
-function toImageRef(file: string, aspect: number) {
+function findMerchFile(stem: string) {
+  for (const ext of EXTENSIONS) {
+    const file = `${stem}.${ext}`;
+    if (existsSync(path.join(MERCH_DIR, file))) return file;
+  }
+  return undefined;
+}
+
+function toImageRef(file: string, aspect: number, dir = "covers") {
   return {
-    src: `/covers/${file}`,
+    src: `/${dir}/${file}`,
     // Left empty so `BookCover` substitutes the localized title — the alt
     // text has to follow the reader's language, which this module doesn't
     // know about.
@@ -87,4 +107,26 @@ export function shareImageFor(book: Book): string | undefined {
     if (existsSync(path.join(COVERS_DIR, file))) return `/covers/${file}`;
   }
   return undefined;
+}
+
+/**
+ * Merch photography, from `public/merch/<slug>.<ext>`.
+ *
+ * Same contract as covers: drop the file in and it appears. Without it the
+ * section still lays out at the right proportion, showing a tinted plate.
+ */
+export function attachMerchArt(item: Merch): Merch {
+  if (item.image) return item;
+
+  const file = findMerchFile(item.slug);
+  if (!file) return item;
+
+  return {
+    ...item,
+    image: toImageRef(file, item.imageAspect ?? 1, "merch"),
+  };
+}
+
+export function attachMerchArtAll(items: Merch[]): Merch[] {
+  return items.map(attachMerchArt);
 }

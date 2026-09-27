@@ -1,10 +1,11 @@
-import { getBookBySlug } from "@/features/catalog/catalog";
+import { getSellableBySlug } from "@/features/catalog/sellable";
 import {
   recordOrder,
   releaseStock,
   type OrderItem,
 } from "@/features/checkout/inventory";
 import { getPaidOrder, verifyWebhook } from "@/features/checkout/stripe";
+import { defaultLocale } from "@/i18n/config";
 
 /**
  * Stripe → Supabase.
@@ -34,17 +35,25 @@ import { getPaidOrder, verifyWebhook } from "@/features/checkout/stripe";
  *
  * Only ever fills gaps: whatever Stripe did tell us is what the customer saw
  * on their receipt, and the order book should agree with the receipt.
+ *
+ * Titles fall back in the default locale, not the buyer's: this is the shop's
+ * own record, read by whoever packs the parcel, and an order book in mixed
+ * languages is harder to work from than one that is consistently in Spanish.
+ * A merch line has no ISBN to fill, and stays null.
  */
 async function withCatalogueDetails(items: OrderItem[]): Promise<OrderItem[]> {
   return Promise.all(
     items.map(async (item) => {
-      const book = item.slug ? await getBookBySlug(item.slug) : undefined;
-      if (!book) return item;
+      const sellable = item.slug
+        ? await getSellableBySlug(item.slug, defaultLocale)
+        : undefined;
+      if (!sellable) return item;
 
       return {
         ...item,
-        title: item.title && item.title !== item.slug ? item.title : book.title,
-        isbn: item.isbn ?? book.isbn,
+        title:
+          item.title && item.title !== item.slug ? item.title : sellable.title,
+        isbn: item.isbn ?? sellable.isbn,
       };
     }),
   );

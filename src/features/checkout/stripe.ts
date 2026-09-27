@@ -15,7 +15,8 @@ import type { Currency, ISBN } from "@/types/book";
  * what the browser sent, beyond the slug and the quantity. */
 export type PricedItem = {
   slug: string;
-  isbn: ISBN;
+  /** Books carry one; merch does not. */
+  isbn: ISBN | null;
   name: string;
   amount: number;
   currency: Currency;
@@ -122,6 +123,8 @@ export async function createCheckoutSession({
               unit_amount: item.amount,
               product_data: {
                 name: item.name,
+                // `null` is how Stripe's metadata spells "no such key", which
+                // is what a merch line's ISBN is — not an empty string.
                 metadata: { slug: item.slug, isbn: item.isbn },
               },
             },

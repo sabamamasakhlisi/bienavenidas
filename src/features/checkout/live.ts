@@ -1,4 +1,5 @@
 import type { Book, StockStatus } from "@/types/book";
+import type { Merch } from "@/types/merch";
 
 import { getInventory } from "./inventory";
 
@@ -70,4 +71,47 @@ export async function withLiveShop(books: Book[]): Promise<Book[]> {
 export async function withLiveShopBook(book: Book): Promise<Book> {
   const [live] = await withLiveShop([book]);
   return live;
+}
+
+/**
+ * The same overlay for merch, applied per size.
+ *
+ * Each size is its own slug and its own row, so baby tee selling out says
+ * nothing about XL — which is the whole reason sizes are separate slugs. An
+ * item's own price still stands for any size that has no price of its own and
+ * no row of its own.
+ */
+export async function withLiveMerch(items: Merch[]): Promise<Merch[]> {
+  const slugs = items.flatMap((item) =>
+    item.variants.map((variant) => variant.slug),
+  );
+
+  let inventory;
+  try {
+    inventory = await getInventory(slugs, { label: "merch" });
+  } catch (error) {
+    console.error(
+      "[supabase] merch lookup failed; showing catalogue price and status",
+      error,
+    );
+    return items;
+  }
+
+  if (!inventory) return items;
+
+  return items.map((item) => ({
+    ...item,
+    variants: item.variants.map((variant) => {
+      const row = inventory.get(variant.slug);
+      if (!row) return variant;
+
+      const price = variant.price ?? item.price;
+
+      return {
+        ...variant,
+        price: row.price ? { ...price, amount: row.price } : variant.price,
+        stock: liveStatus(variant.stock ?? "in_stock", row.quantity),
+      };
+    }),
+  }));
 }
