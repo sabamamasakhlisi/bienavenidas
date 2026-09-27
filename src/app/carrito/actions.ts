@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { headers } from "next/headers";
 
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { getSellableBySlug } from "@/features/catalog/sellable";
 import {
@@ -14,6 +14,11 @@ import {
   type InventoryRow,
 } from "@/features/checkout/inventory";
 import { MAX_QUANTITY } from "@/features/checkout/limits";
+import {
+  isShippingZone,
+  SHIPPING_METHODS,
+  type ShippingZone,
+} from "@/features/checkout/shipping";
 import {
   CHECKOUT_MINUTES,
   createCheckoutSession,
@@ -210,11 +215,16 @@ export async function checkCart(request: CheckoutRequest): Promise<{
   }
 }
 
-/** Turns the browser's cart into a Stripe Checkout session. */
+/** Turns the browser's cart into a Stripe Checkout session, for the shipping
+ * zone the buyer picked in the cart. */
 export async function startCheckout(
   request: CheckoutRequest,
+  zone: ShippingZone,
 ): Promise<CheckoutResult> {
   if (!isCheckoutConfigured()) return { ok: false, reason: "notConfigured" };
+
+  // Only the zone crosses from the browser; its rates are looked up here.
+  if (!isShippingZone(zone)) return { ok: false, reason: "failed" };
 
   if (!Array.isArray(request) || request.length === 0 || request.length > 50) {
     return { ok: false, reason: "empty" };
@@ -302,12 +312,20 @@ export async function startCheckout(
       return { ok: false, reason: "outOfStock", slugs: held };
     }
 
+    const t = await getTranslations({ locale, namespace: "cart.shipping" });
     url = await createCheckoutSession({
       items,
       locale,
       origin: await origin(),
       reservation,
       expiresAt,
+      zone,
+      methodNames: Object.fromEntries(
+        SHIPPING_METHODS[zone].map((method) => [
+          method.id,
+          t(`methods.${method.id}`),
+        ]),
+      ),
     });
   } catch (error) {
     console.error("Stripe checkout failed", error);

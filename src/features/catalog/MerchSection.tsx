@@ -1,5 +1,3 @@
-import type { CheckoutAction } from "@/features/checkout/CartView";
-
 import { MerchArt } from "./MerchArt";
 import { SizePicker } from "./SizePicker";
 import type { MerchView } from "./view";
@@ -18,10 +16,8 @@ import type { MerchView } from "./view";
  */
 export function MerchSection({
   merch,
-  checkout,
 }: {
   merch: MerchView;
-  checkout: CheckoutAction;
 }) {
   return (
     <section
@@ -46,7 +42,7 @@ export function MerchSection({
         )}
 
         <div style={{ gridArea: "picker" }}>
-          <SizePicker merch={merch} checkout={checkout} />
+          <SizePicker merch={merch} />
         </div>
 
         <div

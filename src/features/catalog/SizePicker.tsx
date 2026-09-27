@@ -4,8 +4,6 @@ import { useId, useState } from "react";
 
 import { useTranslations } from "next-intl";
 
-import type { CheckoutAction } from "@/features/checkout/CartView";
-
 import { AddToCart } from "./AddToCart";
 import type { MerchView } from "./view";
 
@@ -23,10 +21,8 @@ import type { MerchView } from "./view";
  */
 export function SizePicker({
   merch,
-  checkout,
 }: {
   merch: MerchView;
-  checkout: CheckoutAction;
 }) {
   const t = useTranslations("merch");
   const name = useId();
@@ -90,7 +86,6 @@ export function SizePicker({
           }}
           title={`${merch.title} — ${chosen.label}`}
           price={chosen.price}
-          checkout={checkout}
         />
       ) : (
         <p className="bg-brand px-4 py-2 text-center text-[13px] opacity-70">
