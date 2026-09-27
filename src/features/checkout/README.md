@@ -25,7 +25,7 @@ only divided by 100 in `formatMoney`, for display.
 | Variable | Needed for |
 | --- | --- |
 | `STRIPE_SECRET_KEY` | Creating and reading Checkout sessions. Without it the cart works and checkout says payment isn't live yet. |
-| `STRIPE_WEBHOOK_SECRET` | Verifying the webhook. Register `https://<site>/api/stripe/webhook` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. |
+| `STRIPE_WEBHOOK_SECRET` | Verifying the webhook. Register `https://<site>/api/stripe/webhook` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. Without it every delivery is rejected as an invalid signature — orders are not saved and stock is not decremented, with nothing to see on the site. |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Stock, prices and recording orders. Without them checkout skips the stock check and falls back to catalogue prices. Projects older than 2025 name the key `SUPABASE_SERVICE_ROLE_KEY`; either is read. |
 | `SITE_URL` | Optional. Base URL for Stripe's return links; defaults to the request's host. |
 
@@ -51,6 +51,36 @@ So a book priced in exactly one of those is charged from that place. Where a
 linked Stripe price disagrees with the price the page quoted, checkout charges
 Stripe's and logs the difference — keep them equal, or the customer is charged
 something other than what they were shown.
+
+## Webhooks while developing
+
+Stripe cannot reach `localhost`, so a local checkout completes at Stripe and
+nothing tells the app: the payment succeeds, no order is written, and stock
+never moves. Nothing logs an error, because nothing was ever called.
+
+Bridge it with the Stripe CLI, and leave it running for as long as you are
+testing payments:
+
+```
+stripe listen \
+  --events checkout.session.completed,checkout.session.async_payment_succeeded \
+  --forward-to localhost:3000/api/stripe/webhook
+```
+
+It prints a `whsec_…` signing secret — put that in `STRIPE_WEBHOOK_SECRET` and
+restart the dev server. That secret belongs to the listener: it changes when
+you start a new one, and it is not the one from the dashboard.
+
+A checkout that happened while nothing was listening is not lost. Find its
+event and send it again:
+
+```
+stripe events list --type checkout.session.completed --limit 5
+stripe events resend <evt_…>
+```
+
+Recording is idempotent, so replaying an event that was already recorded
+changes nothing — a retry cannot decrement stock twice.
 
 ## Running the shop in Supabase
 

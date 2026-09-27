@@ -1,4 +1,5 @@
-import { recordOrder } from "@/features/checkout/inventory";
+import { getBookBySlug } from "@/features/catalog/catalog";
+import { recordOrder, type OrderItem } from "@/features/checkout/inventory";
 import { getPaidOrder, verifyWebhook } from "@/features/checkout/stripe";
 
 /**
@@ -11,8 +12,36 @@ import { getPaidOrder, verifyWebhook } from "@/features/checkout/stripe";
  *
  * Register it in the Stripe dashboard as `https://<site>/api/stripe/webhook`
  * for the two events below, and put its signing secret in
- * `STRIPE_WEBHOOK_SECRET`.
+ * `STRIPE_WEBHOOK_SECRET`. Locally, Stripe cannot reach your machine at all:
+ * run `stripe listen --events checkout.session.completed,checkout.session.async_payment_succeeded
+ * --forward-to localhost:3000/api/stripe/webhook` and use the secret it prints.
  */
+
+/**
+ * Fills in what Stripe could not say.
+ *
+ * A line bought through a linked Stripe price carries that product's name and
+ * metadata, not ours — so an order can come back titled `joven-chica`, with no
+ * ISBN, because that is what the Stripe product is called. The catalogue knows
+ * both, keyed by the slug the lookup key already gave us.
+ *
+ * Only ever fills gaps: whatever Stripe did tell us is what the customer saw
+ * on their receipt, and the order book should agree with the receipt.
+ */
+async function withCatalogueDetails(items: OrderItem[]): Promise<OrderItem[]> {
+  return Promise.all(
+    items.map(async (item) => {
+      const book = item.slug ? await getBookBySlug(item.slug) : undefined;
+      if (!book) return item;
+
+      return {
+        ...item,
+        title: item.title && item.title !== item.slug ? item.title : book.title,
+        isbn: item.isbn ?? book.isbn,
+      };
+    }),
+  );
+}
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   if (!signature) return new Response("Missing signature", { status: 400 });
@@ -35,7 +64,11 @@ export async function POST(request: Request) {
     }
 
     try {
-      await recordOrder(await getPaidOrder(session));
+      const order = await getPaidOrder(session);
+      await recordOrder({
+        ...order,
+        items: await withCatalogueDetails(order.items),
+      });
     } catch (error) {
       // A 500 makes Stripe retry, and `record_order` is idempotent.
       console.error("Could not record order", session.id, error);
