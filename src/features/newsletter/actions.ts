@@ -3,7 +3,7 @@
 import { getLocale } from "next-intl/server";
 
 import { defaultLocale, isLocale } from "@/i18n/config";
-import { callerIp } from "@/lib/caller";
+import { callerNetwork } from "@/lib/caller";
 
 import type { SubscribeState } from "./state";
 import { addSubscriber } from "./subscribers";
@@ -82,7 +82,7 @@ export async function subscribe(
     return { status: "error", reason: "email" };
   }
 
-  const caller = (await callerIp()) ?? "unknown";
+  const caller = (await callerNetwork()) ?? "unknown";
   if (tooMany(caller)) return { status: "error", reason: "throttled" };
 
   const rawLocale = await getLocale();

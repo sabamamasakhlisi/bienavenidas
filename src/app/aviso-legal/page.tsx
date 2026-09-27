@@ -76,6 +76,14 @@ export default function AvisoLegalPage() {
           respondiendo «baja» a cualquiera de nuestros correos.
         </p>
         <p>
+          <strong>Seguridad de la tienda.</strong> Al iniciar un pago
+          guardamos, durante unos 40 minutos, una huella de tu dirección IP
+          protegida con una clave secreta, que no permite recuperarla. Sirve
+          para evitar que alguien reserve todos los ejemplares de forma
+          automatizada. La base legal es nuestro interés legítimo en proteger
+          la tienda.
+        </p>
+        <p>
           <strong>Correos que nos envías.</strong> Usamos tus datos solo para
           responderte.
         </p>
