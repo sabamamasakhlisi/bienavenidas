@@ -56,6 +56,9 @@
       "out_of_print": "Descatalogado"
     }
   },
+  "merch": {
+    "chooseSize": "Elige tu talla"
+  },
   "cart": {
     "title": "Cesta",
     "link": "Cesta, {count, plural, =0 {vacía} one {# libro} other {# libros}}",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState, type ReactNode } from "react";
 
 import { useTranslations } from "next-intl";
 
@@ -44,12 +44,21 @@ export function Reader({
   intro,
   shelfHint,
   checkout,
+  afterEntry,
 }: {
   views: BookView[];
   layout: ShelfItem[];
   intro: readonly string[];
   shelfHint: string;
   checkout: CheckoutAction;
+  /**
+   * Sections to drop in below a given entry, by slug.
+   *
+   * Passed in already rendered rather than built here, so what goes between
+   * the books stays a server component and this one keeps knowing only about
+   * books. Today it is the merch section; it could be anything.
+   */
+  afterEntry?: Record<string, ReactNode>;
 }) {
   const { lines } = useCart();
 
@@ -161,7 +170,7 @@ export function Reader({
             </p>
           ) : (
             <AddToCart
-              book={view.book}
+              item={view.book}
               title={view.title}
               price={view.price}
               checkout={checkout}
@@ -169,12 +178,16 @@ export function Reader({
           );
 
           return (
+            <Fragment key={view.book.slug}>
             <section
-              key={view.book.slug}
               id={`book-${view.book.slug}`}
               tabIndex={-1}
               className="scroll-mt-16 px-6 py-12 md:px-16 md:py-28"
             >
+              {/* Capped and centred, so the left/right alternation stays a
+                  rhythm on a wide monitor instead of flinging each entry at
+                  the nearest edge of the screen. */}
+              <div className="mx-auto w-full max-w-[var(--content-max)]">
               {/* Phones and small tablets. Always expanded: with no hover there
                   is nothing to reveal the entry with, and a tap that only
                   unfolds text is a tap that reads as a dead end. */}
@@ -301,7 +314,11 @@ export function Reader({
                   )}
                 </div>
               </div>
+              </div>
             </section>
+
+            {afterEntry?.[view.book.slug]}
+            </Fragment>
           );
         })}
       </div>

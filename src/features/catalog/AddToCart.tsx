@@ -5,8 +5,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
 import type { CheckoutAction } from "@/features/checkout/CartView";
-import { useCart } from "@/features/checkout/cart";
-import type { Book } from "@/types/book";
+import { useCart, type CartItem } from "@/features/checkout/cart";
 
 /**
  * The price plate from the design doubles as the add-to-cart control.
@@ -19,15 +18,20 @@ import type { Book } from "@/types/book";
  * brought to where the decision was made, not a second kind of checkout. It
  * stays for as long as the title is in the cart, outlasting the "added" flash,
  * because that flash is feedback and this is an offer.
+ *
+ * Takes a `CartItem` rather than a `Book`: merch uses the same control, and
+ * with it the same confirmation, the same live region and the same way to pay.
  */
 export function AddToCart({
-  book,
+  item,
   title,
   price,
   checkout,
 }: {
-  book: Book;
+  item: CartItem;
+  /** Localized, and what the cart line is labelled with. */
   title: string;
+  /** Formatted for display — the plate's face. */
   price: string;
   checkout: CheckoutAction;
 }) {
@@ -38,10 +42,10 @@ export function AddToCart({
   const [isPending, startTransition] = useTransition();
   const [failed, setFailed] = useState<string | null>(null);
 
-  const inCart = lines.some((line) => line.slug === book.slug);
+  const inCart = lines.some((line) => line.slug === item.slug);
 
   function handleAdd() {
-    add(book, title);
+    add(item, title);
     setJustAdded(true);
     window.setTimeout(() => setJustAdded(false), 2000);
   }

@@ -1,5 +1,5 @@
 /**
- * Derives web formats for every cover in public/covers/.
+ * Derives web formats for every cover in public/covers/ and public/merch/.
  *
  *   pnpm covers
  *
@@ -14,48 +14,59 @@ import path from "node:path";
 
 import sharp from "sharp";
 
-const DIR = "public/covers";
-
-/** Covers are never drawn wider than ~310 CSS px; 2× covers HiDPI screens. */
-const MAX_WIDTH = 700;
+/**
+ * Each source folder with the widest the art is ever drawn, doubled for HiDPI
+ * screens. Covers top out around 310 CSS px; a merch photo runs to 520.
+ */
+const SOURCES = [
+  { dir: "public/covers", maxWidth: 700 },
+  { dir: "public/merch", maxWidth: 1100 },
+];
 
 sharp.cache(false);
 
 /** Sources are the lossless drops; .avif/.webp are what this script writes. */
 const ORIGINALS = /\.(jpe?g|png)$/i;
 
-const files = (await readdir(DIR)).filter((f) => ORIGINALS.test(f));
-
-if (files.length === 0) {
-  console.log(`No originals in ${DIR}/ — nothing to do.`);
-  console.log("Add e.g. joven-chica.png (named after the book's slug),");
-  console.log("or joven-chica.spine.png for the shelf view.");
-}
-
 const kb = async (f) => Math.round((await stat(f)).size / 1024) + " KB";
 
-for (const file of files) {
-  const slug = file.replace(ORIGINALS, "");
-  const src = path.join(DIR, file);
+for (const { dir, maxWidth } of SOURCES) {
+  const files = (await readdir(dir)).filter((f) => ORIGINALS.test(f));
 
-  const base = () =>
-    sharp(src, { limitInputPixels: false }).resize({
-      width: MAX_WIDTH,
-      withoutEnlargement: true,
-    });
+  if (files.length === 0) {
+    console.log(`No originals in ${dir}/ — nothing to do.`);
+    continue;
+  }
 
-  const avif = path.join(DIR, `${slug}.avif`);
-  const webp = path.join(DIR, `${slug}.webp`);
+  for (const file of files) {
+    const slug = file.replace(ORIGINALS, "");
+    const src = path.join(dir, file);
 
-  await base().avif({ quality: 62, effort: 4, chromaSubsampling: "4:4:4" }).toFile(avif);
-  await base().webp({ quality: 80, effort: 5 }).toFile(webp);
+    const base = () =>
+      sharp(src, { limitInputPixels: false }).resize({
+        width: maxWidth,
+        withoutEnlargement: true,
+      });
 
-  const { width, height } = await sharp(src, { limitInputPixels: false }).metadata();
+    const avif = path.join(dir, `${slug}.avif`);
+    const webp = path.join(dir, `${slug}.webp`);
 
-  console.log(
-    `${slug}\n` +
-      `  source ${width}x${height} (${await kb(src)})  aspect ${(width / height).toFixed(3)}\n` +
-      `  avif   ${await kb(avif)}\n` +
-      `  webp   ${await kb(webp)}`,
-  );
+    await base()
+      .avif({ quality: 62, effort: 4, chromaSubsampling: "4:4:4" })
+      .toFile(avif);
+    await base().webp({ quality: 80, effort: 5 }).toFile(webp);
+
+    const { width, height } = await sharp(src, {
+      limitInputPixels: false,
+    }).metadata();
+
+    console.log(
+      `${dir}/${slug}\n` +
+        `  source ${width}x${height} (${await kb(src)})  aspect ${(
+          width / height
+        ).toFixed(3)}\n` +
+        `  avif   ${await kb(avif)}\n` +
+        `  webp   ${await kb(webp)}`,
+    );
+  }
 }
