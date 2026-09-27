@@ -37,6 +37,9 @@ export function MerchArt({
       width={merch.image.width}
       height={merch.image.height}
       sizes={sizes}
+      style={
+        merch.imageTilt ? { transform: `rotate(${merch.imageTilt}deg)` } : undefined
+      }
       className="h-full w-full object-contain"
     />
   );

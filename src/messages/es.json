@@ -16,7 +16,11 @@
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Editorial independiente",
-    "description": "Editorial independiente y librería en línea. Libros que llegan, se quedan y se comparten."
+    "description": "Editorial independiente de Madrid y Barcelona: un refugio para historias desordenadas y descentralizadas. Investigaciones, ensayos, reflexiones y sentimientos.",
+    "pages": {
+      "bienvenidas": "El mural de BIEN*VENIDAS, editorial independiente: recórrelo arrastrando en cualquier dirección.",
+      "contacto": "Escríbenos para manuscritos, colaboraciones, prensa o librerías, y suscríbete a la newsletter de BIEN*VENIDAS."
+    }
   },
   "home": {
     "statement": "Publicamos libros que llegan, se quedan y se comparten.",
@@ -61,6 +65,7 @@
   },
   "cart": {
     "title": "Cesta",
+    "close": "Cerrar",
     "link": "Cesta, {count, plural, =0 {vacía} one {# libro} other {# libros}}",
     "empty": "Tu cesta está vacía.",
     "browse": "Ver libros",
@@ -113,7 +118,7 @@
     "sending": "un momento…",
     "success": "¡Listo! Ya estás en la lista.",
     "close": "Cerrar",
-    "smallPrint": "Al suscribirte a la newsletter, aceptas recibir nuestras newsletter y la política de privacidad.\nPuedes darte de baja en cualquier momento a través del enlace que encontrarás en el mail.",
+    "smallPrint": "Al suscribirte a la newsletter, aceptas recibir nuestras newsletter y la política de privacidad.\nPuedes darte de baja en cualquier momento respondiendo «baja» a cualquiera de nuestros correos.",
     "errors": {
       "email": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
       "throttled": "Has hecho varios intentos seguidos. Espera unos minutos y vuelve a probar.",

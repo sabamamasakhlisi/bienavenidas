@@ -1,15 +1,23 @@
 /**
- * Derives web formats for every cover in public/covers/ and public/merch/.
+ * Derives web formats for every cover in public/covers/ and public/merch/,
+ * and records what shape each picture actually is.
  *
  *   pnpm covers
  *
  * Takes each original (jpg/jpeg/png) and writes .avif and .webp siblings.
  * covers.ts prefers those, so the originals stay as the archive copy.
  *
+ * It also writes `src/features/catalog/art-aspects.json`, measured from the
+ * files themselves. Proportions used to be typed into the catalogue by hand,
+ * and a hand-typed number that disagrees with its picture fails silently:
+ * `object-cover` trims the ends off a spine, `object-contain` floats a shirt
+ * in dead space, and nothing anywhere says so. Measuring is the only way the
+ * two cannot drift.
+ *
  * Same encoder settings as the poster: 4:4:4 chroma, because cover art is
  * mostly type and flat colour, which is what chroma subsampling damages first.
  */
-import { readdir, stat } from "node:fs/promises";
+import { readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -28,13 +36,48 @@ sharp.cache(false);
 /** Sources are the lossless drops; .avif/.webp are what this script writes. */
 const ORIGINALS = /\.(jpe?g|png)$/i;
 
+/** Anything worth measuring, whether this script made it or not. */
+const IMAGES = /\.(jpe?g|png|webp|avif)$/i;
+
+/** Where the measurements land, relative to the repository root. */
+const MANIFEST = "src/features/catalog/art-aspects.json";
+
+/** stem -> width ÷ height, per folder. */
+const aspects = {};
+
 const kb = async (f) => Math.round((await stat(f)).size / 1024) + " KB";
 
 for (const { dir, maxWidth } of SOURCES) {
-  const files = (await readdir(dir)).filter((f) => ORIGINALS.test(f));
+  const all = await readdir(dir);
+  const files = all.filter((f) => ORIGINALS.test(f));
+
+  /*
+   * Measure every picture in the folder, not only the ones converted below.
+   * A stem that arrived as a .webp is never a conversion source, but the
+   * catalogue still has to know its shape — and without this it would be the
+   * one entry silently missing from the manifest.
+   *
+   * The original wins where there is one: the derived copies are resized, and
+   * a rounded pixel count is a slightly rounded ratio.
+   */
+  const folder = path.basename(dir);
+  aspects[folder] ??= {};
+  const measured = new Set();
+
+  for (const file of [...files, ...all.filter((f) => IMAGES.test(f))]) {
+    const stem = file.replace(IMAGES, "");
+    if (measured.has(stem)) continue;
+    measured.add(stem);
+    const { width, height } = await sharp(path.join(dir, file), {
+      limitInputPixels: false,
+    }).metadata();
+    if (width && height) {
+      aspects[folder][stem] = Number((width / height).toFixed(4));
+    }
+  }
 
   if (files.length === 0) {
-    console.log(`No originals in ${dir}/ — nothing to do.`);
+    console.log(`No originals in ${dir}/ — nothing to convert.`);
     continue;
   }
 
@@ -70,3 +113,15 @@ for (const { dir, maxWidth } of SOURCES) {
     );
   }
 }
+
+await writeFile(
+  MANIFEST,
+  `${JSON.stringify(aspects, null, 2)}\n`,
+  "utf8",
+);
+
+const total = Object.values(aspects).reduce(
+  (sum, folder) => sum + Object.keys(folder).length,
+  0,
+);
+console.log(`\n${MANIFEST}: ${total} measured`);

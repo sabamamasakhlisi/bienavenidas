@@ -154,6 +154,26 @@ export function Reader({
             ? "items-start text-start md:flex-row md:items-start"
             : "items-end text-end md:flex-row-reverse md:items-start";
 
+          /**
+           * What names the entry.
+           *
+           * A title that isn't out yet doesn't name itself: the block is a
+           * notice rather than a listing, so it says so and lets the blurb and
+           * the notify-me control carry the rest. Set in the interface's
+           * language even where the book's own text is not — "Próximamente" is
+           * the shop speaking, not the author.
+           */
+          const heading = view.isComingSoon ? (
+            <h2 className="text-[13px] tracking-[0.12em] uppercase">
+              {view.stockLabel}
+            </h2>
+          ) : (
+            <h2 className="bask-font text-[15px] italic">
+              {view.title}
+              <span className="not-italic">, {view.author}</span>
+            </h2>
+          );
+
           // Whatever stands where the price stands. Built once and placed by
           // both layouts, so the three cases can't drift apart.
           const control = view.isOpenCall ? (
@@ -166,7 +186,7 @@ export function Reader({
             // Nothing to add, so nothing that looks like it can be added: the
             // last place to stop someone is before the cart, not at the till.
             <p className="bg-brand px-4 py-2 text-center text-[13px] opacity-70">
-              {view.soldOutLabel}
+              {view.stockLabel}
             </p>
           ) : (
             <AddToCart
@@ -194,10 +214,7 @@ export function Reader({
               <div className="md:hidden">
                 <div className="grid grid-cols-2 gap-x-2">
                   <div className="flex flex-col gap-3 text-[12px] leading-relaxed">
-                    <h2 className="bask-font text-[15px] italic">
-                      {view.title}
-                      <span className="not-italic">, {view.author}</span>
-                    </h2>
+                    {heading}
 
                     {view.credits && (
                       <p className="whitespace-pre-line text-muted">
@@ -222,6 +239,10 @@ export function Reader({
                       title={view.title}
                       image={view.book.detailImage}
                       sizes="45vw"
+                      // The first entry's cover is the largest paint on a
+                      // phone. Hidden from `md` up, so it is raised in the
+                      // queue rather than preloaded for every screen.
+                      fetchPriority={index === 0 ? "high" : undefined}
                     />
                   </div>
                 </div>
@@ -259,9 +280,7 @@ export function Reader({
                     onClick={() => setChosen(isOpen ? null : view.book.slug)}
                     // Buttons are centred by the UA stylesheet, which beats
                     // the alignment inherited from the block — so state it.
-                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] ${
-                      onLeft ? "text-start" : "text-end"
-                    }`}
+                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] text-start`}
                   >
                     {view.quote}
                   </button>
@@ -295,10 +314,7 @@ export function Reader({
                       </div>
 
                       <div className="flex max-w-[42ch] flex-col gap-3 text-[12px] leading-relaxed">
-                        <h2 className="bask-font text-[15px] italic">
-                          {view.title}
-                          <span className="not-italic">, {view.author}</span>
-                        </h2>
+                        {heading}
 
                         <p className="text-muted">{view.description}</p>
 

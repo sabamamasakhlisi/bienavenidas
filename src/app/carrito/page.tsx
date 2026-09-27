@@ -9,7 +9,8 @@ import { checkCart, startCheckout } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("cart");
-  return { title: t("title") };
+  // A cart is personal and empty to a crawler: nothing to index.
+  return { title: t("title"), robots: { index: false, follow: true } };
 }
 
 export default async function CarritoPage() {
@@ -17,7 +18,9 @@ export default async function CarritoPage() {
 
   return (
     <Container className="py-24 md:py-32">
-      <h1 className="bask-font mb-12 text-4xl md:text-5xl">{t("title")}</h1>
+      {/* Set in the sans, like the wordmark in the header — not the display
+          serif the book titles use. */}
+      <h1 className="mb-12 text-4xl md:text-5xl">{t("title")}</h1>
       <CartView checkout={startCheckout} check={checkCart} />
     </Container>
   );
