@@ -64,15 +64,15 @@ export default function CondicionesPage() {
 
       <LegalSection title="5. Cambios y devoluciones">
         <p>
-          Elige tu pedido con cuidado. No hacemos reembolsos si simplemente
-          cambias de opinión o eliges un producto equivocado.
+          Tienes 14 días desde que recibes el pedido para devolverlo, sin
+          necesidad de dar explicaciones. Los libros que nos devuelvas deben
+          estar como nuevos. Los gastos de devolución corren de tu cuenta,
+          salvo que el error sea nuestro.
         </p>
         <p>
-          Puedes cambiar tu producto o recibir un reembolso en los 14 días
-          siguientes a la confirmación de tu pedido. Los libros que nos
-          devuelvas deben estar como nuevos. Los gastos de envío solo se
-          reembolsan si los productos que devuelves no son los que pediste y,
-          por tanto, el error es nuestro.
+          Te devolvemos el importe del pedido, incluido el envío original, en
+          un plazo máximo de 14 días desde que recibimos los productos, por el
+          mismo medio de pago.
         </p>
         <p>
           Devuélvenos los productos en un embalaje seguro y resistente, junto
