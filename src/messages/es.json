@@ -84,8 +84,7 @@
         "ordinario": "Envío ordinario nacional",
         "certificado": "Envío certificado nacional",
         "eu": "Envío UE"
-      },
-      "chooseAtCheckout": "Eliges el tipo de envío al pagar."
+      }
     },
     "shippingNote": "Envíos a España y la UE, añadidos al pagar. Pago seguro con Stripe.",
     "checkout": "Pagar",

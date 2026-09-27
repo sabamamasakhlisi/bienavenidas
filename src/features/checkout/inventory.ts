@@ -178,7 +178,7 @@ export type NewOrder = {
   items: OrderItem[];
   amountTotal: number;
   currency: string;
-  /** `ordinario`, `certificado` or `eu` (see `shipping.ts`). */
+  /** The rate's name in Stripe, e.g. "Envío certificado nacional". */
   shippingMethod: string | null;
   /** What the buyer paid for shipping, minor units, included in the total. */
   shippingCost: number | null;

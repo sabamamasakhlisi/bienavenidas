@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCart } from "./cart";
 import { MAX_QUANTITY } from "./limits";
 import { formatMoney } from "./money";
-import { SHIPPING_METHODS, SHIPPING_ZONES, type ShippingZone } from "./shipping";
+import { SHIPPING_ZONES, type ShippingZone } from "./shipping";
 
 type CheckoutFailure =
   | "notConfigured"
@@ -247,19 +247,6 @@ export function CartView({
               </label>
             ))}
           </div>
-          <ul className="mt-1 text-[12px] text-muted">
-            {SHIPPING_METHODS[zone].map((method) => (
-              <li key={method.id} className="tabular-nums">
-                {t(`shipping.methods.${method.id}`)}:{" "}
-                {formatMoney({ amount: method.amount, currency: "EUR" }, locale)}
-              </li>
-            ))}
-          </ul>
-          {SHIPPING_METHODS[zone].length > 1 && (
-            <p className="text-[12px] text-muted">
-              {t("shipping.chooseAtCheckout")}
-            </p>
-          )}
         </fieldset>
 
         <p className="max-w-[40ch] text-[12px] text-muted">

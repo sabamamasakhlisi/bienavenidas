@@ -94,6 +94,52 @@ export async function getLinkedPrices(
  */
 export const CHECKOUT_MINUTES = 30;
 
+/**
+ * The zone's shipping rates, as managed in the Stripe dashboard: every active
+ * EUR rate whose metadata has `zone` set to this zone, cheapest first (Stripe
+ * preselects the first). Rates can't be edited once created, so a new price is
+ * a new rate with the same tag, and the old one archived.
+ *
+ * With nothing tagged yet, falls back to the rates in `shipping.ts` rather
+ * than refusing to sell — loudly, because that fallback is not what the
+ * dashboard says.
+ */
+async function shippingOptions(
+  zone: ShippingZone,
+  methodNames: Record<string, string>,
+): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
+  const tagged: Stripe.ShippingRate[] = [];
+  for await (const rate of stripe().shippingRates.list({
+    active: true,
+    currency: "eur",
+    limit: 100,
+  })) {
+    if (rate.metadata?.zone === zone) tagged.push(rate);
+  }
+
+  if (tagged.length > 0) {
+    // Stripe takes at most five options per session.
+    return tagged
+      .sort(
+        (a, b) => (a.fixed_amount?.amount ?? 0) - (b.fixed_amount?.amount ?? 0),
+      )
+      .slice(0, 5)
+      .map((rate) => ({ shipping_rate: rate.id }));
+  }
+
+  console.warn(
+    `[checkout] no active Stripe shipping rate has metadata zone=${zone}; using the fallback rates in shipping.ts`,
+  );
+  return SHIPPING_METHODS[zone].map((method) => ({
+    shipping_rate_data: {
+      type: "fixed_amount",
+      display_name: methodNames[method.id] ?? method.id,
+      fixed_amount: { amount: method.amount, currency: "eur" },
+      metadata: { method: method.id, zone },
+    },
+  }));
+}
+
 export async function createCheckoutSession({
   items,
   locale,
@@ -108,8 +154,8 @@ export async function createCheckoutSession({
   origin: string;
   /** Where the buyer said the parcel is going. */
   zone: ShippingZone;
-  /** What each shipping method is called on Stripe's page, in the buyer's
-   * language. */
+  /** Names for the fallback rates, in the buyer's language. Rates from the
+   * dashboard keep the names given there. */
   methodNames: Record<string, string>;
   /** The stock hold this session pays for, if one was taken. */
   reservation?: string;
@@ -141,16 +187,7 @@ export async function createCheckoutSession({
     shipping_address_collection: {
       allowed_countries: [...ZONE_COUNTRIES[zone]] as AllowedCountry[],
     },
-    // Defined here rather than in the Stripe dashboard, so the rates live in
-    // `shipping.ts` next to the prices the cart shows. The first is preselected.
-    shipping_options: SHIPPING_METHODS[zone].map((method) => ({
-      shipping_rate_data: {
-        type: "fixed_amount",
-        display_name: methodNames[method.id] ?? method.id,
-        fixed_amount: { amount: method.amount, currency: "eur" },
-        metadata: { method: method.id, zone },
-      },
-    })),
+    shipping_options: await shippingOptions(zone, methodNames),
     // Couriers ask for a phone number on delivery.
     phone_number_collection: { enabled: true },
     // Compact order record for fulfilment, readable in the Stripe dashboard.
@@ -202,6 +239,7 @@ export async function getPaidOrder(session: Stripe.Checkout.Session) {
     shippingName: shipping?.name ?? session.customer_details?.name ?? null,
     shippingAddress: shipping?.address ? { ...shipping.address } : null,
     amountTotal: session.amount_total ?? 0,
+    // Dashboard rates are recorded by their name; fallback ones by their id.
     shippingMethod:
       shippingRate?.metadata?.method ?? shippingRate?.display_name ?? null,
     shippingCost: session.shipping_cost?.amount_total ?? null,

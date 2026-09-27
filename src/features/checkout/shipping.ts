@@ -1,9 +1,10 @@
 /**
- * Shipping zones and what each costs.
+ * Shipping zones: where each ships, and fallback rates.
  *
- * Safe to import from the browser: the cart shows these prices before anyone
- * reaches Stripe, and the server charges from the same table, so the two can
- * never disagree.
+ * The rates themselves are managed in the Stripe dashboard (Product catalogue →
+ * Shipping rates), each tagged with metadata `zone` = `es` or `eu`; see
+ * `shippingOptions` in `stripe.ts`. The table below is only a fallback
+ * for while none are tagged, so checkout keeps working during setup.
  *
  * Why the buyer picks a zone on our page: Stripe's hosted Checkout offers the
  * same shipping options whatever address is typed into it, so it can't charge
@@ -20,8 +21,8 @@ export function isShippingZone(value: unknown): value is ShippingZone {
 }
 
 /**
- * The method ids are what the order book stores, so keep them stable; the
- * names shown to buyers live in the `cart.shipping` messages.
+ * Fallback rates, used only when the Stripe dashboard has no active rate
+ * tagged for the zone. Names live in the `cart.shipping.methods` messages.
  */
 export const SHIPPING_METHODS = {
   es: [

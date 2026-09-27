@@ -84,8 +84,7 @@
         "ordinario": "Standard shipping within Spain",
         "certificado": "Registered shipping within Spain",
         "eu": "EU shipping"
-      },
-      "chooseAtCheckout": "You choose the shipping method at checkout."
+      }
     },
     "shippingNote": "Shipping to Spain and the EU, added at checkout. Secure payment with Stripe.",
     "checkout": "Checkout",

@@ -1,7 +1,7 @@
 -- Shipping on each order: which method the buyer chose and what it cost.
 --
--- Rates depend on the destination (see `src/features/checkout/shipping.ts`):
--- ordinario and certificado within Spain, one rate for the rest of the EU.
+-- Rates depend on the destination and are managed as shipping rates in the
+-- Stripe dashboard (see `src/features/checkout/shipping.ts`).
 -- `amount_total` already includes the shipping; `shipping_cost` says how much
 -- of it was shipping, and `shipping_method` says how to post the parcel.
 
@@ -10,7 +10,7 @@ alter table public.orders
   add column shipping_cost   integer;
 
 comment on column public.orders.shipping_method is
-  'ordinario | certificado (Spain) or eu (rest of the EU). Null for orders placed before shipping was charged.';
+  'Name of the Stripe shipping rate chosen, e.g. Envío certificado nacional. Null for orders placed before shipping was charged.';
 comment on column public.orders.shipping_cost is
   'Shipping paid, in cents. Included in amount_total.';
 
