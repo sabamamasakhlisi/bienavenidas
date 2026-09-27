@@ -178,12 +178,59 @@ export type NewOrder = {
   items: OrderItem[];
   amountTotal: number;
   currency: string;
+  /** The stock hold this payment settles, from the session's metadata. */
+  reservation: string | null;
 };
 
 /**
- * Saves a paid order and decrements stock in one transaction. Safe to call
- * again for the same session (Stripe retries webhooks): returns false and
- * changes nothing.
+ * Holds copies while a customer is on Stripe's payment page, so a second
+ * customer can't pay for the same last copy.
+ *
+ * All or nothing: returns the slugs that are short (and nothing is held), or
+ * an empty list when every tracked line is now reserved under `reference`.
+ * Returns null when Supabase isn't configured. Untracked titles are never
+ * held. See `supabase/migrations/20260927130000_stock_reservations.sql`.
+ */
+export async function reserveStock(
+  reference: string,
+  items: { slug: string; quantity: number }[],
+  expiresAt: Date,
+): Promise<string[] | null> {
+  if (!isInventoryConfigured()) return null;
+
+  const { data, error } = await supabase().rpc("reserve_stock", {
+    p_reference: reference,
+    p_items: items.map(({ slug, quantity }) => ({ slug, quantity })),
+    p_expires_at: expiresAt.toISOString(),
+  });
+  if (error) throw error;
+
+  const short = (data as { short_slug: string }[]).map((row) => row.short_slug);
+  log(
+    true,
+    `reserve ${reference}: ${
+      short.length ? `SHORT ${short.join(", ")}` : `held until ${expiresAt.toISOString()}`
+    }`,
+  );
+  return short;
+}
+
+/** Lets a hold go early: its Stripe session expired or was never created. */
+export async function releaseStock(reference: string): Promise<void> {
+  if (!isInventoryConfigured()) return;
+  const { error } = await supabase().rpc("release_stock", {
+    p_reference: reference,
+  });
+  if (error) throw error;
+  log(true, `released ${reference}`);
+}
+
+/**
+ * Saves a paid order, settles its stock hold and decrements stock in one
+ * transaction. Safe to call again for the same session (Stripe retries
+ * webhooks): returns false and changes nothing. An order that takes stock
+ * below zero is still saved — the money has been taken — and flagged
+ * `oversold` in the table.
  */
 export async function recordOrder(order: NewOrder): Promise<boolean> {
   const { data, error } = await supabase().rpc("record_order", {
@@ -195,6 +242,7 @@ export async function recordOrder(order: NewOrder): Promise<boolean> {
     p_items: order.items,
     p_amount_total: order.amountTotal,
     p_currency: order.currency,
+    p_reservation: order.reservation,
   });
   if (error) throw error;
   return data === true;
