@@ -10,7 +10,7 @@ import { getOrderSummary } from "@/features/checkout/stripe";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("cart");
-  return { title: t("thanksTitle") };
+  return { title: t("thanksTitle"), robots: { index: false, follow: false } };
 }
 
 /** Where Stripe sends the customer back after paying. */

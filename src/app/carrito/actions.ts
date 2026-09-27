@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { headers } from "next/headers";
 
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { getSellableBySlug } from "@/features/catalog/sellable";
 import {
@@ -15,6 +15,11 @@ import {
 } from "@/features/checkout/inventory";
 import { MAX_QUANTITY } from "@/features/checkout/limits";
 import {
+  isShippingZone,
+  SHIPPING_METHODS,
+  type ShippingZone,
+} from "@/features/checkout/shipping";
+import {
   CHECKOUT_MINUTES,
   createCheckoutSession,
   getLinkedPrices,
@@ -22,6 +27,7 @@ import {
   type PricedItem,
 } from "@/features/checkout/stripe";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { callerKey } from "@/lib/caller";
 
 export type CheckoutRequest = { slug: string; quantity: number }[];
 
@@ -52,6 +58,27 @@ type Priced = {
 };
 
 /**
+ * One line per title.
+ *
+ * The browser's cart already keeps one, but a request can be written by hand,
+ * and every check below is per line: the same book sent twice, a copy each,
+ * would pass a stock check and a hold that each see only one copy asked for.
+ * A quantity that isn't a whole number poisons its sum, so the merged line
+ * still fails validation instead of being quietly repaired.
+ */
+function mergeLines(request: CheckoutRequest): CheckoutRequest {
+  const merged = new Map<string, number>();
+
+  for (const line of request) {
+    const slug = typeof line?.slug === "string" ? line.slug : "";
+    const quantity = Number.isInteger(line?.quantity) ? line.quantity : NaN;
+    merged.set(slug, (merged.get(slug) ?? 0) + quantity);
+  }
+
+  return [...merged].map(([slug, quantity]) => ({ slug, quantity }));
+}
+
+/**
  * Prices a cart and says what can't be bought.
  *
  * This is where the app joins `catalog` and `checkout`, so neither feature has
@@ -71,10 +98,12 @@ type Priced = {
  * one that matters, and it is the same code.
  */
 async function priceCart(
-  request: CheckoutRequest,
+  raw: CheckoutRequest,
   locale: Locale,
   { log }: { log: boolean },
 ): Promise<Priced> {
+  const request = mergeLines(raw);
+
   // One round trip for every line, before pricing: the same rows answer both
   // "what does it cost" and "is there one left".
   const inventory: Map<string, InventoryRow> | null = await getInventory(
@@ -186,11 +215,16 @@ export async function checkCart(request: CheckoutRequest): Promise<{
   }
 }
 
-/** Turns the browser's cart into a Stripe Checkout session. */
+/** Turns the browser's cart into a Stripe Checkout session, for the shipping
+ * zone the buyer picked in the cart. */
 export async function startCheckout(
   request: CheckoutRequest,
+  zone: ShippingZone,
 ): Promise<CheckoutResult> {
   if (!isCheckoutConfigured()) return { ok: false, reason: "notConfigured" };
+
+  // Only the zone crosses from the browser; its rates are looked up here.
+  if (!isShippingZone(zone)) return { ok: false, reason: "failed" };
 
   if (!Array.isArray(request) || request.length === 0 || request.length > 50) {
     return { ok: false, reason: "empty" };
@@ -270,6 +304,7 @@ export async function startCheckout(
       reservation,
       items,
       new Date(expiresAt.getTime() + 10 * 60_000),
+      await callerKey(),
     );
     if (held === null) reservation = undefined;
     if (held && held.length > 0) {
@@ -277,12 +312,20 @@ export async function startCheckout(
       return { ok: false, reason: "outOfStock", slugs: held };
     }
 
+    const t = await getTranslations({ locale, namespace: "cart.shipping" });
     url = await createCheckoutSession({
       items,
       locale,
       origin: await origin(),
       reservation,
       expiresAt,
+      zone,
+      methodNames: Object.fromEntries(
+        SHIPPING_METHODS[zone].map((method) => [
+          method.id,
+          t(`methods.${method.id}`),
+        ]),
+      ),
     });
   } catch (error) {
     console.error("Stripe checkout failed", error);

@@ -16,7 +16,11 @@
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Independent press",
-    "description": "An independent press and online bookshop. Books that arrive, stay, and get passed on."
+    "description": "An independent press in Madrid and Barcelona: a refuge for messy, decentred stories. Research, essays, reflections and feelings.",
+    "pages": {
+      "bienvenidas": "The BIEN*VENIDAS mural, from an independent publisher: drag in any direction to explore it.",
+      "contacto": "Write to us about manuscripts, collaborations, press or bookshops, and sign up for the BIEN*VENIDAS newsletter."
+    }
   },
   "home": {
     "statement": "We publish books that arrive, stay, and get passed on.",
@@ -61,6 +65,7 @@
   },
   "cart": {
     "title": "Cart",
+    "close": "Close",
     "link": "Cart, {count, plural, =0 {empty} one {# book} other {# books}}",
     "empty": "Your cart is empty.",
     "browse": "Browse books",
@@ -70,7 +75,20 @@
     "remove": "Remove",
     "removeLabel": "Remove {title} from the cart",
     "subtotal": "Subtotal",
-    "shippingNote": "Shipping to Spain and the EU. Secure payment with Stripe.",
+    "shipping": {
+      "legend": "Where should we send it?",
+      "zones": {
+        "es": "Spain",
+        "eu": "Another EU country"
+      },
+      "methods": {
+        "ordinario": "Standard shipping within Spain",
+        "certificado": "Registered shipping within Spain",
+        "eu": "EU shipping"
+      },
+      "chooseAtCheckout": "You choose the shipping method at checkout."
+    },
+    "shippingNote": "Shipping to Spain and the EU, added at checkout. Secure payment with Stripe.",
     "checkout": "Checkout",
     "redirecting": "Opening checkout…",
     "errors": {
@@ -113,7 +131,7 @@
     "sending": "one moment…",
     "success": "You're on the list.",
     "close": "Close",
-    "smallPrint": "By subscribing you agree to receive our newsletter and to the privacy policy.\nYou can unsubscribe at any time through the link in the email.",
+    "smallPrint": "By subscribing you agree to receive our newsletter and to the privacy policy.\nYou can unsubscribe at any time by replying \"unsubscribe\" to any of our emails.",
     "errors": {
       "email": "That address doesn't look right. Check it and try again.",
       "throttled": "That's a few sign-ups in a row. Give it a few minutes and try again.",

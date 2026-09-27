@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { getLocale, getTranslations } from "next-intl/server";
 
-import type { CheckoutAction } from "@/features/checkout/CartView";
 import { withLiveMerch, withLiveShop } from "@/features/checkout/live";
 import { defaultLocale, isLocale } from "@/i18n/config";
 
@@ -20,7 +19,7 @@ import { toMerchView, toView } from "./view";
  * `/libros` — the shelf is the front page. Sharing one component keeps the two
  * genuinely identical instead of two copies that drift.
  */
-export async function CatalogPage({ checkout }: { checkout: CheckoutAction }) {
+export async function CatalogPage() {
   const rawLocale = await getLocale();
   const locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
 
@@ -40,7 +39,6 @@ export async function CatalogPage({ checkout }: { checkout: CheckoutAction }) {
       <MerchSection
         key={item.slug}
         merch={toMerchView(item, locale, tBook("stock.out_of_stock"))}
-        checkout={checkout}
       />
     );
 
@@ -62,7 +60,6 @@ export async function CatalogPage({ checkout }: { checkout: CheckoutAction }) {
         layout={shelfLayout}
         intro={shelfIntro}
         shelfHint={t("shelfHint")}
-        checkout={checkout}
         afterEntry={afterEntry}
       />
 

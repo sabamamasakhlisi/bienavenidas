@@ -1,9 +1,30 @@
-import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { Logo } from "@/components/layout/Logo";
 import { NewsletterModal } from "@/features/newsletter/NewsletterModal";
+import { CONTACT_EMAIL, openGraphFor } from "@/lib/site";
 
-const EMAIL = "hola@bienavenidas.com";
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("contacto");
+  const tMeta = await getTranslations("metadata.pages");
+  const description = tMeta("contacto");
+
+  return {
+    title: t("title"),
+    description,
+    alternates: { canonical: "/contacto" },
+    openGraph: openGraphFor({
+      title: t("title"),
+      description,
+      path: "/contacto",
+      locale: await getLocale(),
+    }),
+  };
+}
+
+const EMAIL = CONTACT_EMAIL;
 
 /**
  * Social accounts.
@@ -21,7 +42,10 @@ export default async function ContactoPage() {
   const t = await getTranslations("contacto");
 
   return (
-    <section className="relative mt-[calc(var(--hdr-h)*-1)] flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#E5E2E2] px-6 text-[#4B3B3B]">
+    <section
+      data-ground="light"
+      className="relative mt-[calc(var(--hdr-h)*-1)] flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#E5E2E2] px-6 text-[#4B3B3B]"
+    >
       {/* The monogram again, blown up past the edges of the page as a
           watermark. Barely lighter than the ground it sits on — it should read
           as texture, not as a second logo. */}
@@ -63,6 +87,7 @@ export default async function ContactoPage() {
 
         <NewsletterModal />
       </div>
+
     </section>
   );
 }

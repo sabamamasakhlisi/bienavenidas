@@ -10,12 +10,21 @@ import { BookCover } from "@/features/catalog/BookCover";
 import { NotifyLink } from "@/features/catalog/NotifyLink";
 import {
   formatPrice,
+  getAllBooks,
   getBookBySlug,
   localizeBook,
 } from "@/features/catalog/catalog";
-import { attachCover } from "@/features/catalog/covers";
+import { attachCover, shareImageFor } from "@/features/catalog/covers";
 import { withLiveShopBook } from "@/features/checkout/live";
 import { defaultLocale, isLocale } from "@/i18n/config";
+import {
+  SITE_NAME,
+  absoluteUrl,
+  jsonLd,
+  openGraphFor,
+  summarize,
+} from "@/lib/site";
+import type { Book } from "@/types/book";
 
 type Props = {
   // `params` is a Promise as of Next.js 15 — it must be awaited.
@@ -27,6 +36,12 @@ async function resolveLocale() {
   return isLocale(locale) ? locale : defaultLocale;
 }
 
+/** Every title is rendered at build time; see `revalidate` in the layout. */
+export async function generateStaticParams() {
+  const books = await getAllBooks();
+  return books.map((book) => ({ slug: book.slug }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const book = await getBookBySlug(slug);
@@ -36,9 +51,82 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: t("notFoundTitle") };
   }
 
-  const { title, description } = localizeBook(book, await resolveLocale());
+  const locale = await resolveLocale();
+  const { title, description } = localizeBook(book, locale);
+  const summary = summarize(description);
+  const image = shareImageFor(book);
+  const path = `/libros/${book.slug}`;
 
-  return { title, description };
+  return {
+    title,
+    description: summary,
+    alternates: { canonical: path },
+    openGraph: openGraphFor({
+      title,
+      description: summary,
+      path,
+      locale,
+      images: image ? [{ url: image, alt: title }] : undefined,
+    }),
+  };
+}
+
+/** schema.org availability for each stock status that can be ordered. */
+const AVAILABILITY: Partial<Record<Book["stock"], string>> = {
+  in_stock: "https://schema.org/InStock",
+  low_stock: "https://schema.org/LimitedAvailability",
+  out_of_stock: "https://schema.org/OutOfStock",
+  preorder: "https://schema.org/PreOrder",
+  out_of_print: "https://schema.org/Discontinued",
+};
+
+/** ISBN-13 check digit. Placeholder numbers fail it and are left out. */
+function isValidIsbn13(isbn: string) {
+  if (!/^\d{13}$/.test(isbn)) return false;
+  const sum = [...isbn.slice(0, 12)].reduce(
+    (total, digit, i) => total + Number(digit) * (i % 2 ? 3 : 1),
+    0,
+  );
+  return (10 - (sum % 10)) % 10 === Number(isbn[12]);
+}
+
+/**
+ * What search engines read about the title: a book that is also a product
+ * for sale, so it can appear with its price and availability. Only facts
+ * the page itself shows; nothing is offered for a title with no price.
+ */
+function bookJsonLd(book: Book, title: string, description: string) {
+  const url = absoluteUrl(`/libros/${book.slug}`);
+  const image = shareImageFor(book);
+  const availability = AVAILABILITY[book.stock];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": ["Book", "Product"],
+    name: title,
+    url,
+    description: summarize(description, 300),
+    ...(image ? { image: absoluteUrl(image) } : {}),
+    ...(isValidIsbn13(book.isbn) ? { isbn: book.isbn } : {}),
+    author: book.authors.map((author) => ({
+      "@type": "Person",
+      name: author.name,
+    })),
+    publisher: { "@type": "Organization", name: SITE_NAME },
+    numberOfPages: book.pageCount,
+    datePublished: book.publishedAt,
+    ...(availability && book.price.amount > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            url,
+            price: (book.price.amount / 100).toFixed(2),
+            priceCurrency: book.price.currency,
+            availability,
+          },
+        }
+      : {}),
+  };
 }
 
 export default async function BookPage({ params }: Props) {
@@ -63,6 +151,13 @@ export default async function BookPage({ params }: Props) {
 
   return (
     <Container className="py-20 md:py-28">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd(bookJsonLd(book, title, description)),
+        }}
+      />
+
       <Link href="/libros" className="text-xs uppercase tracking-[0.2em] opacity-60">
         {tCommon("backToCatalogue")}
       </Link>

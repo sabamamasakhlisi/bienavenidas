@@ -50,9 +50,7 @@ export async function addSubscriber(
       ? Date.now() - new Date(createdAt).getTime() < 5000
       : true;
 
-    console.log(
-      `[supabase] newsletter: ${isNew ? "added" : "already subscribed"} (${locale})`,
-    );
+  
 
     return isNew ? "saved" : "already";
   } catch (error) {

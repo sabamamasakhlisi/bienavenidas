@@ -1,6 +1,27 @@
-import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { PannableImage } from "@/features/editorial/PannableImage";
+import { openGraphFor } from "@/lib/site";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("bienvenidas");
+  const tMeta = await getTranslations("metadata.pages");
+  const description = tMeta("bienvenidas");
+
+  return {
+    title: t("title"),
+    description,
+    alternates: { canonical: "/bienvenidas" },
+    openGraph: openGraphFor({
+      title: t("title"),
+      description,
+      path: "/bienvenidas",
+      locale: await getLocale(),
+    }),
+  };
+}
 
 export default async function BienvenidasPage() {
   const t = await getTranslations("bienvenidas");
