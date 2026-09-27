@@ -35,8 +35,7 @@ export default function AvisoLegalPage() {
     <LegalPage title={TITLE} updated="Última actualización: septiembre de 2026">
       <LegalSection title="1. Titular">
         <p>
-          Este sitio web y su tienda en línea pertenecen a BIEN*VENIDAS,
-          proyecto editorial gestionado por personas físicas.
+          Este sitio web y su tienda en línea pertenecen a BIEN*VENIDAS.
         </p>
         <p>
           NIF: {OWNER_NIF}

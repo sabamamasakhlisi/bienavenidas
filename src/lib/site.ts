@@ -86,7 +86,6 @@ export function openGraphFor({
 }
 
 /**
- * Who runs the shop, for the legal pages. Private individuals (personas
- * físicas) trading under the BIEN*VENIDAS name.
+ * The shop's tax ID, for the legal pages.
  */
 export const OWNER_NIF = "71955193S";

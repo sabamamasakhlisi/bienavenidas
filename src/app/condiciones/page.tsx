@@ -7,7 +7,7 @@ import { CONTACT_EMAIL, OWNER_NIF, openGraphFor } from "@/lib/site";
 
 const TITLE = "Condiciones y términos";
 const DESCRIPTION =
-  "Cómo comprar en BIEN*VENIDAS: precios, pago, envíos, devoluciones y derecho de desistimiento.";
+  "Cómo comprar en BIEN*VENIDAS: precios, pago, envíos, cambios y devoluciones.";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -32,9 +32,8 @@ export default function CondicionesPage() {
     <LegalPage title={TITLE} updated="Última actualización: septiembre de 2026">
       <LegalSection title="1. Quién vende">
         <p>
-          BIEN*VENIDAS, proyecto editorial gestionado por personas físicas.
-          NIF: {OWNER_NIF}. Para cualquier consulta sobre un pedido, escríbenos
-          a <LegalMail email={CONTACT_EMAIL} />.
+          BIEN*VENIDAS. NIF: {OWNER_NIF}. Para cualquier consulta sobre un
+          pedido, escríbenos a <LegalMail email={CONTACT_EMAIL} />.
         </p>
       </LegalSection>
 
@@ -63,18 +62,23 @@ export default function CondicionesPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="5. Derecho de desistimiento">
+      <LegalSection title="5. Cambios y devoluciones">
         <p>
-          Tienes 14 días naturales desde que recibes el pedido para
-          devolverlo sin dar explicaciones. Escríbenos a{" "}
-          <LegalMail email={CONTACT_EMAIL} /> para avisarnos y envíanos el
-          producto, sin usar y en su estado original, en los 14 días
-          siguientes. Los gastos de la devolución corren de tu cuenta.
+          Elige tu pedido con cuidado. No hacemos reembolsos si simplemente
+          cambias de opinión o eliges un producto equivocado.
         </p>
         <p>
-          Te devolvemos el importe, incluidos los gastos del envío original,
-          en un plazo máximo de 14 días desde que recibimos el producto, por
-          el mismo medio de pago.
+          Puedes cambiar tu producto o recibir un reembolso en los 14 días
+          siguientes a la confirmación de tu pedido. Los libros que nos
+          devuelvas deben estar como nuevos. Los gastos de envío solo se
+          reembolsan si los productos que devuelves no son los que pediste y,
+          por tanto, el error es nuestro.
+        </p>
+        <p>
+          Devuélvenos los productos en un embalaje seguro y resistente, junto
+          con tu número de pedido y la factura o el recibo. Escríbenos a{" "}
+          <LegalMail email={CONTACT_EMAIL} /> y te indicaremos la dirección
+          de devolución.
         </p>
       </LegalSection>
 
