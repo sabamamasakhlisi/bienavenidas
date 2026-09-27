@@ -110,7 +110,7 @@
     "sending": "one moment…",
     "success": "You're on the list.",
     "close": "Close",
-    "smallPrint": "By subscribing you agree to receive our newsletter and to the privacy policy.\nYou can unsubscribe at any time through the link in the email.",
+    "smallPrint": "By subscribing you agree to receive our newsletter and to the privacy policy.\nYou can unsubscribe at any time by replying \"unsubscribe\" to any of our emails.",
     "errors": {
       "email": "That address doesn't look right. Check it and try again.",
       "throttled": "That's a few sign-ups in a row. Give it a few minutes and try again.",
