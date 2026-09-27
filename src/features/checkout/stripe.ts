@@ -89,18 +89,30 @@ export async function getLinkedPrices(
   return linked;
 }
 
+/**
+ * How long a Checkout session can be paid. Stripe's minimum, so a copy held
+ * for someone who wandered off is back on sale as soon as possible.
+ */
+export const CHECKOUT_MINUTES = 30;
+
 export async function createCheckoutSession({
   items,
   locale,
   origin,
+  reservation,
+  expiresAt,
 }: {
   items: PricedItem[];
   locale: Locale;
   origin: string;
+  /** The stock hold this session pays for, if one was taken. */
+  reservation?: string;
+  expiresAt: Date;
 }): Promise<string> {
   const session = await stripe().checkout.sessions.create({
     mode: "payment",
     locale,
+    expires_at: Math.floor(expiresAt.getTime() / 1000),
     line_items: items.map((item) =>
       item.stripePriceId
         ? { quantity: item.quantity, price: item.stripePriceId }
@@ -124,6 +136,7 @@ export async function createCheckoutSession({
     // Compact order record for fulfilment, readable in the Stripe dashboard.
     metadata: {
       order: items.map((item) => `${item.quantity}x ${item.slug}`).join(", "),
+      ...(reservation ? { reservation } : {}),
     },
     success_url: `${origin}/carrito/gracias?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/carrito`,
@@ -163,6 +176,7 @@ export async function getPaidOrder(session: Stripe.Checkout.Session) {
     shippingName: shipping?.name ?? session.customer_details?.name ?? null,
     shippingAddress: shipping?.address ? { ...shipping.address } : null,
     amountTotal: session.amount_total ?? 0,
+    reservation: session.metadata?.reservation ?? null,
     currency: (session.currency ?? "eur").toUpperCase(),
     items: lineItems.data.map((line) => {
       const product = line.price?.product;

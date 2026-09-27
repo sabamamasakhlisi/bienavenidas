@@ -25,7 +25,7 @@ only divided by 100 in `formatMoney`, for display.
 | Variable | Needed for |
 | --- | --- |
 | `STRIPE_SECRET_KEY` | Creating and reading Checkout sessions. Without it the cart works and checkout says payment isn't live yet. |
-| `STRIPE_WEBHOOK_SECRET` | Verifying the webhook. Register `https://<site>/api/stripe/webhook` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. Without it every delivery is rejected as an invalid signature — orders are not saved and stock is not decremented, with nothing to see on the site. |
+| `STRIPE_WEBHOOK_SECRET` | Verifying the webhook. Register `https://<site>/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `checkout.session.expired`. Without it every delivery is rejected as an invalid signature — orders are not saved and stock is not decremented, with nothing to see on the site. |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Stock, prices and recording orders. Without them checkout skips the stock check and falls back to catalogue prices. Projects older than 2025 name the key `SUPABASE_SERVICE_ROLE_KEY`; either is read. |
 | `SITE_URL` | Optional. Base URL for Stripe's return links; defaults to the request's host. |
 
@@ -63,7 +63,7 @@ testing payments:
 
 ```
 stripe listen \
-  --events checkout.session.completed,checkout.session.async_payment_succeeded \
+  --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired \
   --forward-to localhost:3000/api/stripe/webhook
 ```
 
@@ -95,3 +95,18 @@ payments.
 Must not import from `catalog` or `editorial`; a cart holds slugs and ISBNs, and
 the app layer (`src/app/carrito/actions.ts`) resolves them against the
 catalogue.
+
+## The last copy
+
+Opening checkout **reserves** the copies (`reserve_stock`, all lines or none)
+and the Stripe session is created to expire after 30 minutes, Stripe's
+minimum. While one customer is paying, a second one asking for the same last
+copy is stopped at the site with "not enough copies" instead of reaching
+Stripe. The hold ends when the order is recorded, when Stripe sends
+`checkout.session.expired`, or 10 minutes after the session's own expiry.
+
+If a payment still lands with no copy left (a slow bank method that settles
+after its hold ran out), the order is saved, stock goes below zero and
+`orders.oversold` is set. Refund it in Stripe or tell the customer when it
+will ship. Stripe's hosted page can't show stock itself, so the site is the
+only place a customer is told a book is sold out.

@@ -1,5 +1,9 @@
 import { getSellableBySlug } from "@/features/catalog/sellable";
-import { recordOrder, type OrderItem } from "@/features/checkout/inventory";
+import {
+  recordOrder,
+  releaseStock,
+  type OrderItem,
+} from "@/features/checkout/inventory";
 import { getPaidOrder, verifyWebhook } from "@/features/checkout/stripe";
 import { defaultLocale } from "@/i18n/config";
 
@@ -11,10 +15,13 @@ import { defaultLocale } from "@/i18n/config";
  * Cards that settle later (`async_payment_succeeded`) are recorded when the
  * money actually arrives, not before.
  *
+ * `checkout.session.expired` hands back the copies a checkout was holding, the
+ * moment Stripe gives up on it rather than when the hold runs out.
+ *
  * Register it in the Stripe dashboard as `https://<site>/api/stripe/webhook`
- * for the two events below, and put its signing secret in
+ * for the three events below, and put its signing secret in
  * `STRIPE_WEBHOOK_SECRET`. Locally, Stripe cannot reach your machine at all:
- * run `stripe listen --events checkout.session.completed,checkout.session.async_payment_succeeded
+ * run `stripe listen --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.expired
  * --forward-to localhost:3000/api/stripe/webhook` and use the secret it prints.
  */
 
@@ -74,14 +81,30 @@ export async function POST(request: Request) {
 
     try {
       const order = await getPaidOrder(session);
-      await recordOrder({
+      const recorded = await recordOrder({
         ...order,
         items: await withCatalogueDetails(order.items),
       });
+      if (recorded) {
+        console.log(`[order] recorded ${session.id}`);
+      }
     } catch (error) {
       // A 500 makes Stripe retry, and `record_order` is idempotent.
       console.error("Could not record order", session.id, error);
       return new Response("Could not record order", { status: 500 });
+    }
+  }
+
+  if (event.type === "checkout.session.expired") {
+    const reservation = event.data.object.metadata?.reservation;
+    if (reservation) {
+      try {
+        await releaseStock(reservation);
+      } catch (error) {
+        // Worth a retry, but not urgent: the hold also runs out on its own.
+        console.error("Could not release stock hold", reservation, error);
+        return new Response("Could not release hold", { status: 500 });
+      }
     }
   }
 

@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { headers } from "next/headers";
 
 import { getLocale } from "next-intl/server";
@@ -7,10 +9,13 @@ import { getLocale } from "next-intl/server";
 import { getSellableBySlug } from "@/features/catalog/sellable";
 import {
   getInventory,
+  releaseStock,
+  reserveStock,
   type InventoryRow,
 } from "@/features/checkout/inventory";
 import { MAX_QUANTITY } from "@/features/checkout/limits";
 import {
+  CHECKOUT_MINUTES,
   createCheckoutSession,
   getLinkedPrices,
   isCheckoutConfigured,
@@ -218,6 +223,7 @@ export async function startCheckout(
   }
 
   let url: string;
+  let reservation: string | undefined;
   try {
     // Last word on price, and the only one that isn't a preference: a line
     // sent to Stripe as a linked price ID is charged at Stripe's amount
@@ -254,13 +260,38 @@ export async function startCheckout(
       return { ok: false, reason: "unavailable", slugs: [] };
     }
 
+    // Hold the copies for as long as the Stripe page can be paid, plus a
+    // margin for the webhook to arrive. The check above is a snapshot; this is
+    // the atomic one, so of two customers after the last copy only one gets
+    // through to Stripe.
+    const expiresAt = new Date(Date.now() + (CHECKOUT_MINUTES + 1) * 60_000);
+    reservation = randomUUID();
+    const held = await reserveStock(
+      reservation,
+      items,
+      new Date(expiresAt.getTime() + 10 * 60_000),
+    );
+    if (held === null) reservation = undefined;
+    if (held && held.length > 0) {
+      console.warn(`[checkout] refused, held by others: ${held.join(", ")}`);
+      return { ok: false, reason: "outOfStock", slugs: held };
+    }
+
     url = await createCheckoutSession({
       items,
       locale,
       origin: await origin(),
+      reservation,
+      expiresAt,
     });
   } catch (error) {
     console.error("Stripe checkout failed", error);
+    if (reservation) {
+      await releaseStock(reservation).catch((releaseError) =>
+        // Harmless if it fails: the hold runs out on its own.
+        console.error("Could not release stock hold", releaseError),
+      );
+    }
     return { ok: false, reason: "failed" };
   }
 
