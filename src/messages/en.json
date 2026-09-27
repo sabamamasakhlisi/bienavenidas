@@ -16,7 +16,11 @@
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Independent press",
-    "description": "An independent press and online bookshop. Books that arrive, stay, and get passed on."
+    "description": "An independent press and online bookshop. Books that arrive, stay, and get passed on.",
+    "pages": {
+      "bienvenidas": "The BIEN*VENIDAS mural, from an independent publisher: drag in any direction to explore it.",
+      "contacto": "Write to us about manuscripts, collaborations, press or bookshops, and sign up for the BIEN*VENIDAS newsletter."
+    }
   },
   "home": {
     "statement": "We publish books that arrive, stay, and get passed on.",

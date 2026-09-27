@@ -17,6 +17,7 @@ export function BookCover({
   className = "",
   sizes,
   priority = false,
+  fetchPriority,
 }: {
   book: Book;
   title: string;
@@ -25,6 +26,9 @@ export function BookCover({
   className?: string;
   sizes?: string;
   priority?: boolean;
+  /** "high" for the one image that is the page's largest paint but may be
+   * hidden at other widths, where `priority` would download it regardless. */
+  fetchPriority?: "high";
 }) {
   const art = image ?? book.cover;
 
@@ -37,6 +41,7 @@ export function BookCover({
         height={art.height}
         sizes={sizes}
         priority={priority}
+        fetchPriority={fetchPriority}
         className={`h-full w-full object-cover ${className}`}
       />
     );

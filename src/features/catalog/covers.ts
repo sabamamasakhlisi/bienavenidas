@@ -75,3 +75,16 @@ export function attachCover(book: Book): Book {
 export function attachCovers(books: Book[]): Book[] {
   return books.map(attachCover);
 }
+
+/**
+ * The cover as a file link previews can show. WhatsApp, Facebook and most
+ * other scrapers don't read AVIF or WebP, so this looks only for the JPEG or
+ * PNG that `pnpm covers` keeps beside them.
+ */
+export function shareImageFor(book: Book): string | undefined {
+  for (const ext of ["jpg", "jpeg", "png"]) {
+    const file = `${book.slug}.${ext}`;
+    if (existsSync(path.join(COVERS_DIR, file))) return `/covers/${file}`;
+  }
+  return undefined;
+}

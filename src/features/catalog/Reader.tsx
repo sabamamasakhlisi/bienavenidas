@@ -209,6 +209,10 @@ export function Reader({
                       title={view.title}
                       image={view.book.detailImage}
                       sizes="45vw"
+                      // The first entry's cover is the largest paint on a
+                      // phone. Hidden from `md` up, so it is raised in the
+                      // queue rather than preloaded for every screen.
+                      fetchPriority={index === 0 ? "high" : undefined}
                     />
                   </div>
                 </div>

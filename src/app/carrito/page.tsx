@@ -9,7 +9,8 @@ import { checkCart, startCheckout } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("cart");
-  return { title: t("title") };
+  // A cart is personal and empty to a crawler: nothing to index.
+  return { title: t("title"), robots: { index: false, follow: true } };
 }
 
 export default async function CarritoPage() {

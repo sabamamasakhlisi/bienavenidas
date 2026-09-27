@@ -16,7 +16,11 @@
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Editorial independiente",
-    "description": "Editorial independiente y librería en línea. Libros que llegan, se quedan y se comparten."
+    "description": "Editorial independiente y librería en línea. Libros que llegan, se quedan y se comparten.",
+    "pages": {
+      "bienvenidas": "El mural de BIEN*VENIDAS, editorial independiente: recórrelo arrastrando en cualquier dirección.",
+      "contacto": "Escríbenos para manuscritos, colaboraciones, prensa o librerías, y suscríbete a la newsletter de BIEN*VENIDAS."
+    }
   },
   "home": {
     "statement": "Publicamos libros que llegan, se quedan y se comparten.",

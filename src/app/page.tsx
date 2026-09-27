@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CatalogPage } from "@/features/catalog/CatalogPage";
+import { CONTACT_EMAIL, SITE_NAME, absoluteUrl, jsonLd } from "@/lib/site";
 
 import { startCheckout } from "./carrito/actions";
 
@@ -12,5 +13,23 @@ export const metadata: Metadata = {
 
 /** The shelf is the front page — `/` and `/libros` render the same view. */
 export default function Home() {
-  return <CatalogPage checkout={startCheckout} />;
+  return (
+    <>
+      {/* Who publishes this site, for search engines' knowledge panels. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: SITE_NAME,
+            url: absoluteUrl("/"),
+            logo: absoluteUrl("/apple-icon.png"),
+            email: CONTACT_EMAIL,
+          }),
+        }}
+      />
+      <CatalogPage checkout={startCheckout} />
+    </>
+  );
 }
