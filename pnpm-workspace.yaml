@@ -1,3 +1,9 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Security floors for transitive dependencies Next.js pins below their fixes.
+# Drop an entry once `pnpm why <name>` shows Next.js already ships a fixed one.
+overrides:
+  browserslist: ">=4.28.7"
+  baseline-browser-mapping: ">=2.11.0"
