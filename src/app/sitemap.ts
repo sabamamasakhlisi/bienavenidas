@@ -20,5 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     { url: absoluteUrl("/bienvenidas"), changeFrequency: "monthly", priority: 0.5 },
     { url: absoluteUrl("/contacto"), changeFrequency: "yearly", priority: 0.3 },
+    { url: absoluteUrl("/aviso-legal"), changeFrequency: "yearly", priority: 0.1 },
+    { url: absoluteUrl("/condiciones"), changeFrequency: "yearly", priority: 0.1 },
   ];
 }

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import Link from "next/link";
+
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Logo } from "@/components/layout/Logo";
@@ -84,6 +86,26 @@ export default async function ContactoPage() {
 
         <NewsletterModal />
       </div>
+
+      {/* The legal pages, pinned to the foot of the page so the centred
+          block above stays exactly where it is. */}
+      <nav
+        aria-label="Legal"
+        className="absolute inset-x-0 bottom-6 flex flex-wrap justify-center gap-x-8 gap-y-2 px-6 text-[12px]"
+      >
+        <Link
+          href="/aviso-legal"
+          className="opacity-70 transition-opacity hover:opacity-100"
+        >
+          Aviso legal y privacidad
+        </Link>
+        <Link
+          href="/condiciones"
+          className="opacity-70 transition-opacity hover:opacity-100"
+        >
+          Condiciones y términos
+        </Link>
+      </nav>
     </section>
   );
 }

@@ -84,3 +84,9 @@ export function openGraphFor({
     images,
   };
 }
+
+/**
+ * Who runs the shop, for the legal pages. Private individuals (personas
+ * físicas) trading under the BIEN*VENIDAS name.
+ */
+export const OWNER_NIF = "71955193S";
