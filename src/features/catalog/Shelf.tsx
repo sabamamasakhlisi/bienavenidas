@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import type { Book } from "@/types/book";
 
@@ -105,6 +105,46 @@ function colourDistance(a: string, b: string) {
 const COLOUR_APART = 25;
 
 /**
+ * How the row's ends stand, on a shelf wide enough to show both.
+ *
+ * Square at the start and leaning at the finish: a row of books is held up at
+ * one end and falls back against the rest at the other, the way the last of
+ * them rests when nothing stands beyond it.
+ * A phone sees neither end at once — the row runs off both sides of the screen
+ * — so there it keeps the angles the layout was authored with.
+ */
+const FIRST_LEAN_MD = 0;
+const LAST_LEAN_MD = -5;
+
+/**
+ * How far the last spine's foot is pushed out from its neighbour.
+ *
+ * A leaning spine pivots on its base, so its top corner swings across whatever
+ * stands beside it — at this height a 5° tilt carries it a third of the way
+ * through the spine before it, which reads as sunk rather than propped. The
+ * foot moves out by exactly that overhang, so the top comes to rest against
+ * its neighbour instead of passing through it, and the gap opens at the bottom
+ * the way it does under a real book that is leaning on the next one.
+ *
+ * Returns the extra space in px: the overhang measured at the height of the
+ * neighbour's top edge, less the gap already between them.
+ */
+function leanFoot(lean: number, width: number, neighbourHeight: number) {
+  if (!lean || neighbourHeight <= 0) return 0;
+
+  const radians = (Math.abs(lean) * Math.PI) / 180;
+  const sin = Math.sin(radians);
+  const cos = Math.cos(radians);
+  const half = width / 2;
+
+  // How far up the tilted edge is when it reaches the neighbour's top.
+  const reach = (neighbourHeight + half * sin) / cos;
+  const overhang = reach * sin - half * (1 - cos);
+
+  return Math.max(0, overhang - GAP);
+}
+
+/**
  * The phone's shelf: every title, plus the few pieces of scenery that look
  * least like anything already standing there.
  *
@@ -158,9 +198,20 @@ function pickCompact(
   return new Set([...titles, ...keep]);
 }
 
-/** The width a book occupies while closed. */
-function closedWidth(book: Book) {
-  return book.spineImage ? (book.spineWidth ?? 52) : (book.spine?.width ?? 26);
+/**
+ * The width a book occupies while closed.
+ *
+ * A book with spine artwork is as wide as that artwork is at the height the
+ * book stands — `standing` is that height, and `spineAspect` its proportion.
+ * Derived rather than authored because the spine box is filled with
+ * `object-cover`: a width that disagrees with the picture crops it, and what
+ * gets cropped off a spine is the title. An explicit `spineWidth` still wins,
+ * for art that is meant to be trimmed.
+ */
+function closedWidth(book: Book, standing: number) {
+  if (!book.spineImage) return book.spine?.width ?? 26;
+  if (book.spineWidth) return book.spineWidth;
+  return standing * (book.spineAspect ?? 0.2);
 }
 
 /**
@@ -338,12 +389,32 @@ export function Shelf({
   // then dropping half the row would show the full shelf for a frame, then snap.
   const compactShelf = pickCompact(shelf, reserved, COMPACT_MAX_ITEMS);
 
+  const gaps = GAP * Math.max(0, shelf.length - 1);
+
+  /**
+   * How tall a book stands, open or closed.
+   *
+   * Books keep the height their open cover would have, so they do not grow as
+   * they swing (see `ShelfBook`) — which also makes it the height a spine has
+   * to fill, and so the number `closedWidth` needs. Before the shelf has been
+   * measured there is nothing to clamp against, so the designed width stands.
+   */
+  const standingOf = (book: Book) => {
+    const aspect = book.coverAspect ?? 0.66;
+    const open = available === null ? (book.shelfWidth ?? 280) : openWidthOf(book);
+    return open / aspect;
+  };
+
   // Natural widths, i.e. the shelf at rest with nothing open.
   const natural = shelf.map((item) =>
-    item.kind === "spine" ? item.width : closedWidth(books[item.slug].book),
+    item.kind === "spine"
+      ? item.width
+      : closedWidth(
+          books[item.slug].book,
+          standingOf(books[item.slug].book),
+        ),
   );
   const naturalTotal = natural.reduce((sum, w) => sum + w, 0);
-  const gaps = GAP * Math.max(0, shelf.length - 1);
 
   // Before the first measurement, fall back to natural widths so the server
   // render and the first client paint agree.
@@ -362,16 +433,21 @@ export function Shelf({
   // and a cover taller than the shelf would be cropped by `max-h-full` rather
   // than kept in proportion. On a scrolling shelf the cover may take the whole
   // visible width — there is more shelf either side of it.
-  const openWidthOf = (book: Book) => {
-    const byWidth = compact
-      ? (available ?? content) * COMPACT_OPEN_SHARE
-      : (content - gaps) * MAX_OPEN_SHARE;
+  function openWidthOf(book: Book) {
+    // Reads the measurement directly rather than `content`: `content` now
+    // falls back to the natural widths, and those are derived from this.
+    const byWidth =
+      available === null
+        ? Infinity
+        : compact
+          ? available * COMPACT_OPEN_SHARE
+          : (available - gaps) * MAX_OPEN_SHARE;
     const byHeight = rowHeight
       ? rowHeight * (book.coverAspect ?? 0.66)
       : Infinity;
 
     return Math.min(book.shelfWidth ?? 280, byWidth, byHeight);
-  };
+  }
 
   const openPx = openIndex >= 0 ? openWidthOf(books[openSlug!].book) : 0;
 
@@ -395,13 +471,25 @@ export function Shelf({
     0,
   );
 
-  // Whatever the fixed items take, the rest share what's left in proportion.
-  // Not on a scrolling shelf: there is no "what's left" to share, because the
-  // row is as long as its contents and the screen is a window onto it.
+  /**
+   * Whatever the fixed items take, the rest share what's left in proportion —
+   * but only ever downwards.
+   *
+   * Shrinking is what makes room for a cover swinging open. Growing was the
+   * same sum run the other way, and it made a wide screen fatten every spine
+   * until the shelf read as a row of slabs: a 24px spine stood 86px wide at
+   * 1440, which is no longer a spine. A book is the width it is, so the shelf
+   * now stops at its natural length and leaves the rest of the row empty,
+   * which is what the end of a shelf looks like.
+   *
+   * Not on a scrolling shelf either: there is no "what's left" to share,
+   * because the row is as long as its contents and the screen is a window
+   * onto it.
+   */
   const flexFactor =
     compact || flexibleNatural <= 0
       ? 1
-      : (content - gaps - fixedTotal) / flexibleNatural;
+      : Math.min(1, (content - gaps - fixedTotal) / flexibleNatural);
 
   const widths = shelf.map((item, index) => {
     if (index === openIndex) return openPx;
@@ -425,22 +513,53 @@ export function Shelf({
         // `overscroll-x-contain` keeps a swipe past the end from being taken
         // for a back gesture; the scrollbar is hidden because the shelf's own
         // overhang already says there is more of it.
-        className="flex flex-1 items-end gap-[5px] overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 [-ms-overflow-style:none] [scrollbar-width:none] md:overflow-visible md:px-6 [&::-webkit-scrollbar]:hidden"
+        // Centred only from `md`. Below it the row scrolls, and centring an
+        // overflowing flex row pushes its first items off the start edge where
+        // no amount of scrolling reaches them.
+        className="flex flex-1 items-end gap-[5px] overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 [-ms-overflow-style:none] [scrollbar-width:none] md:justify-center md:overflow-visible md:px-6 [&::-webkit-scrollbar]:hidden"
       >
         {shelf.map((item, index) => {
           if (item.kind === "spine") {
+            const lean = item.lean ?? 0;
+            const isLast = index === shelf.length - 1;
+            const leanMd =
+              index === 0
+                ? FIRST_LEAN_MD
+                : isLast
+                  ? LAST_LEAN_MD
+                  : lean;
+
+            // Only the last one, and only where it leans: the spines in the
+            // middle lean among other leaning spines, which is the shelf's
+            // texture rather than a book propped on the end of a row.
+            const neighbour = isLast ? shelf[index - 1] : undefined;
+            const footMd =
+              neighbour?.kind === "spine" && rowHeight
+                ? leanFoot(
+                    leanMd,
+                    widths[index],
+                    rowHeight * (neighbour.height / 100),
+                  )
+                : 0;
+
             return (
               <div
                 key={`spine-${index}`}
                 aria-hidden
-                style={{
-                  backgroundColor: item.color,
-                  width: `${widths[index]}px`,
-                  height: `${item.height}%`,
-                  transform: `rotate(${item.lean ?? 0}deg)`,
-                  transitionDuration: "700ms",
-                }}
-                className={`shrink-0 origin-bottom transition-[width] ease-out ${
+                style={
+                  {
+                    backgroundColor: item.color,
+                    width: `${widths[index]}px`,
+                    height: `${item.height}%`,
+                    // Read by `.shelf-spine`; see `globals.css`. Not set as a
+                    // `transform` here, or the wide-screen rule could not win.
+                    "--lean": `${lean}deg`,
+                    "--lean-md": `${leanMd}deg`,
+                    "--foot-md": `${footMd}px`,
+                    transitionDuration: "700ms",
+                  } as CSSProperties
+                }
+                className={`shelf-spine shrink-0 origin-bottom transition-[width] ease-out ${
                   compactShelf.has(item) ? "" : "hidden md:block"
                 }`}
               />

@@ -97,7 +97,13 @@ export function ShelfBook({
               book={book}
               title={title}
               image={book.spineImage}
-              sizes="60px"
+              // Only bites when the picture is wider than the spine box, i.e.
+              // when the art is borrowed from elsewhere and being cropped.
+              position={book.spineFrom ? (book.spineFocus ?? "left") : undefined}
+              // Wide enough for the broadest spine on the shelf at a high
+              // pixel ratio — 60px asked for a source barely wider than the
+              // box, which a retina screen then had to stretch.
+              sizes="120px"
             />
           )}
         </div>

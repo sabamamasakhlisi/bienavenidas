@@ -57,6 +57,16 @@ export type Merch = {
   /** Photo proportion as width ÷ height. */
   imageAspect?: number;
   /**
+   * Degrees the photo is turned, as the design lays it out — the shirt hangs
+   * at a slight angle rather than square to the page. The same idea as a
+   * book's `shelfLean`.
+   *
+   * It turns about its centre and is allowed to overhang its box: the shirt
+   * fills its frame edge to edge, so anything else would either crop it or
+   * shrink it away from the size the layout reserves.
+   */
+  imageTilt?: number;
+  /**
    * Which catalogue entry this sits below on the page, by slug.
    *
    * Editorial placement, so it belongs in the data beside the item rather than

@@ -18,6 +18,7 @@ export function BookCover({
   sizes,
   priority = false,
   fetchPriority,
+  position,
 }: {
   book: Book;
   title: string;
@@ -29,6 +30,9 @@ export function BookCover({
   /** "high" for the one image that is the page's largest paint but may be
    * hidden at other widths, where `priority` would download it regardless. */
   fetchPriority?: "high";
+  /** CSS `object-position` — which part of the picture survives the crop.
+   * Only meaningful when the box is a different shape from the art. */
+  position?: string;
 }) {
   const art = image ?? book.cover;
 
@@ -42,6 +46,7 @@ export function BookCover({
         sizes={sizes}
         priority={priority}
         fetchPriority={fetchPriority}
+        style={position ? { objectPosition: position } : undefined}
         className={`h-full w-full object-cover ${className}`}
       />
     );
