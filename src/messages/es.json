@@ -74,7 +74,20 @@
     "remove": "Quitar",
     "removeLabel": "Quitar {title} de la cesta",
     "subtotal": "Subtotal",
-    "shippingNote": "Envío a España y la UE. Pago seguro con Stripe.",
+    "shipping": {
+      "legend": "¿Adónde lo enviamos?",
+      "zones": {
+        "es": "España",
+        "eu": "Otro país de la UE"
+      },
+      "methods": {
+        "ordinario": "Envío ordinario nacional",
+        "certificado": "Envío certificado nacional",
+        "eu": "Envío UE"
+      },
+      "chooseAtCheckout": "Eliges el tipo de envío al pagar."
+    },
+    "shippingNote": "Envíos a España y la UE, añadidos al pagar. Pago seguro con Stripe.",
     "checkout": "Pagar",
     "redirecting": "Abriendo el pago…",
     "errors": {

@@ -3,6 +3,16 @@ import Stripe from "stripe";
 import type { Locale } from "@/i18n/config";
 import type { Currency, ISBN } from "@/types/book";
 
+import {
+  shippingMethodName,
+  SHIPPING_METHODS,
+  ZONE_COUNTRIES,
+  type ShippingZone,
+} from "./shipping";
+
+type AllowedCountry =
+  Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry;
+
 /**
  * Stripe Checkout, server side only.
  *
@@ -24,16 +34,6 @@ export type PricedItem = {
   /** The linked price in the Stripe product catalogue, when there is one. */
   stripePriceId?: string;
 };
-
-/**
- * Where books ship. Spain and the rest of the EU to start with; widen this
- * list when shipping rates beyond it are decided.
- */
-const SHIPPING_COUNTRIES = [
-  "ES", "PT", "FR", "DE", "IT", "NL", "BE", "LU", "AT", "IE", "DK", "SE",
-  "FI", "PL", "CZ", "SK", "SI", "HR", "HU", "RO", "BG", "GR", "CY", "MT",
-  "EE", "LV", "LT",
-] as const satisfies readonly Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[];
 
 let client: Stripe | null = null;
 
@@ -95,46 +95,23 @@ export async function getLinkedPrices(
  */
 export const CHECKOUT_MINUTES = 30;
 
-/**
- * The shipping rates to offer: every active EUR rate in the Stripe dashboard,
- * cheapest first (Stripe preselects the first), at most the five Stripe allows.
- *
- * Stripe shows them all whatever address is typed, so the buyer picks the one
- * that fits. Rates can't be edited once created: a new price is a new rate,
- * with the old one archived.
- */
-async function shippingOptions(): Promise<
-  Stripe.Checkout.SessionCreateParams.ShippingOption[]
-> {
-  const rates: Stripe.ShippingRate[] = [];
-  for await (const rate of stripe().shippingRates.list({
-    active: true,
-    currency: "eur",
-    limit: 100,
-  })) {
-    rates.push(rate);
-  }
-
-  if (rates.length === 0) {
-    console.warn("[checkout] no active shipping rates in Stripe; charging no shipping");
-  }
-
-  return rates
-    .sort((a, b) => (a.fixed_amount?.amount ?? 0) - (b.fixed_amount?.amount ?? 0))
-    .slice(0, 5)
-    .map((rate) => ({ shipping_rate: rate.id }));
-}
-
 export async function createCheckoutSession({
   items,
   locale,
   origin,
   reservation,
   expiresAt,
+  zone,
+  methodNames,
 }: {
   items: PricedItem[];
   locale: Locale;
   origin: string;
+  /** Where the buyer said the parcel is going. */
+  zone: ShippingZone;
+  /** What each shipping method is called on Stripe's page, in the buyer's
+   * language. */
+  methodNames: Record<string, string>;
   /** The stock hold this session pays for, if one was taken. */
   reservation?: string;
   expiresAt: Date;
@@ -160,15 +137,27 @@ export async function createCheckoutSession({
             },
           },
     ),
-    shipping_address_collection: { allowed_countries: [...SHIPPING_COUNTRIES] },
-    // Every active rate in the dashboard (Product catalogue → Shipping rates),
-    // for the buyer to choose from. Prices are managed there, not here.
-    shipping_options: await shippingOptions(),
+    // Only the zone the buyer chose, so the rates below always match the
+    // address: a Spanish rate can't be paid with a German address.
+    shipping_address_collection: {
+      allowed_countries: [...ZONE_COUNTRIES[zone]] as AllowedCountry[],
+    },
+    // Defined here rather than in the Stripe dashboard, so the rates live in
+    // `shipping.ts` next to the prices the cart shows. The first is preselected.
+    shipping_options: SHIPPING_METHODS[zone].map((method) => ({
+      shipping_rate_data: {
+        type: "fixed_amount",
+        display_name: methodNames[method.id] ?? method.id,
+        fixed_amount: { amount: method.amount, currency: "eur" },
+        metadata: { method: method.id, zone },
+      },
+    })),
     // Couriers ask for a phone number on delivery.
     phone_number_collection: { enabled: true },
     // Compact order record for fulfilment, readable in the Stripe dashboard.
     metadata: {
       order: items.map((item) => `${item.quantity}x ${item.slug}`).join(", "),
+      shipping_zone: zone,
       ...(reservation ? { reservation } : {}),
     },
     success_url: `${origin}/carrito/gracias?session_id={CHECKOUT_SESSION_ID}`,
@@ -202,7 +191,7 @@ export async function getPaidOrder(session: Stripe.Checkout.Session) {
 
   const shipping = session.collected_information?.shipping_details ?? null;
 
-  // The event carries the chosen rate as an id; its name is what gets stored.
+  // The event carries the rate as an id; its metadata says which method it was.
   const rate = session.shipping_cost?.shipping_rate ?? null;
   const shippingRate =
     typeof rate === "string" ? await stripe().shippingRates.retrieve(rate) : rate;
@@ -214,7 +203,10 @@ export async function getPaidOrder(session: Stripe.Checkout.Session) {
     shippingName: shipping?.name ?? session.customer_details?.name ?? null,
     shippingAddress: shipping?.address ? { ...shipping.address } : null,
     amountTotal: session.amount_total ?? 0,
-    shippingMethod: shippingRate?.display_name ?? null,
+    shippingMethod:
+      shippingMethodName(shippingRate?.metadata?.method) ??
+      shippingRate?.display_name ??
+      null,
     shippingCost: session.shipping_cost?.amount_total ?? null,
     reservation: session.metadata?.reservation ?? null,
     currency: (session.currency ?? "eur").toUpperCase(),

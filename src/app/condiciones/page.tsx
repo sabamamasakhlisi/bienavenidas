@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Terms of sale for consumers (TRLGDCU). Spanish only, like the aviso legal.
- * Shipping zone matches `SHIPPING_COUNTRIES` in `features/checkout/stripe.ts`.
+ * Shipping zones match `ZONE_COUNTRIES` in `features/checkout/shipping.ts`.
  */
 export default function CondicionesPage() {
   return (
