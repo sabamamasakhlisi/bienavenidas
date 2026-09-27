@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+:root {
+  /* Sampled from the INSPO frame. */
+  --background: #221e1f; /* page — warm near-black */
+  --foreground: #f0ece7; /* cream body text */
+  --brand: #4d3738; /* header bar, price buttons — matches the logo artwork */
+  --shelf: #191616; /* band the books stand on */
+  --muted: #b9b0ac; /* secondary metadata */
+  --accent: #f5c8e8; /* pink — quotes, the cart mark, size plates, underlines */
+
+  /*
+   * The header monogram's box. The bar is inset by exactly this width so it
+   * never paints behind the mark, so the two must move together — hence one
+   * declaration rather than three arbitrary values in the markup.
+   */
+  --logo-w: 104px;
+  --logo-h: 75px;
+
+  /*
+   * Height of the header strip, taken from the design's own bar shape. Full
+   * screen sections subtract it, so it cannot be spelled out per component.
+   */
+  --hdr-h: 28px; /* from the design's bar shape */
+
+  /*
+   * Widest the reading columns are allowed to get.
+   *
+   * The entries alternate left and right down the page, which on a laptop
+   * reads as a rhythm and on a 27-inch monitor reads as content flung at the
+   * two edges of the screen with a hole in the middle. Capping the box and
+   * centring it keeps the alternation and loses the hole. Sized to the widest
+   * arrangement there is — the merch row, at about 1120px.
+   */
+  --content-max: 1200px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --logo-w: 162px;
+    --logo-h: 116px;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-shelf: var(--shelf);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-switzer);
+  --font-serif: var(--font-baskervvol);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-switzer);
+}
+
+.bask-font {
+  font-family: var(--font-baskervvol);
+}
+
+/* Long-form quote setting: serif, generous leading, slightly tightened colour. */
+.quote {
+  font-family: var(--font-baskervvol);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/*
+ * Reduced motion means less movement, not no feedback.
+ *
+ * This used to flatten every transition on the page to 0.01ms, which left
+ * interactive states snapping with no indication anything had happened.
+ * Looping animations and smooth-scrolling are the things that actually cause
+ * trouble, so those go; components drop their own movement (3D swings, slides)
+ * through `motion-reduce:` utilities and keep their fades.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/*
+ * The merch section's two arrangements.
+ *
+ * Named areas rather than two markup blocks toggled by `md:`, because the
+ * picker holds the chosen size: rendering it twice would give the phone and
+ * the desktop each their own selection, and one of them would be wrong the
+ * moment the window is resized. One instance, placed differently.
+ *
+ * Phone: text down the left, art on the right — the same shape the book
+ * entries take. The empty `1fr` row is what pushes the colophon and the
+ * price to the foot of the column, so they land level with the art.
+ */
+.merch-layout {
+  display: grid;
+  gap: 0.75rem 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas:
+    "title   art"
+    ".       art"
+    "credits art"
+    "picker  art";
+}
+
+/* Art, then what you choose, then what it is — as in the design. */
+@media (min-width: 768px) {
+  .merch-layout {
+    /* The tracks are fixed, so centring them is the grid's own job — a
+       centred *box* would still leave its spare width on one side. */
+    justify-content: center;
+    gap: 0.75rem 2.5rem;
+    grid-template-columns: minmax(0, 520px) 14rem minmax(0, 32ch);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "art picker title"
+      "art picker credits"
+      "art picker .";
+  }
+}
+
+/* Each cell sits at the top of its area; the art keeps its own proportion
+   rather than being stretched to fill the rows it spans. */
+.merch-layout > * {
+  align-self: start;
+}

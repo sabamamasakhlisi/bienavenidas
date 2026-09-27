@@ -1,0 +1,128 @@
+{
+  "common": {
+    "brand": "BIEN*VENIDAS",
+    "tagline": "Editorial independiente",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "languageLabel": "Cambiar idioma",
+    "backToCatalogue": "Volver al catálogo",
+    "skipToContent": "Saltar al contenido"
+  },
+  "nav": {
+    "libros": "Libros",
+    "bienvenidas": "Bien*venidas",
+    "contacto": "Contacto",
+    "cart": "Cesta"
+  },
+  "metadata": {
+    "title": "BIEN*VENIDAS — Editorial independiente",
+    "description": "Editorial independiente y librería en línea. Libros que llegan, se quedan y se comparten."
+  },
+  "home": {
+    "statement": "Publicamos libros que llegan, se quedan y se comparten.",
+    "intro": "Una editorial independiente dedicada a voces que amplían lo que la literatura puede sostener.",
+    "explore": "Explorar",
+    "sections": {
+      "libros": "El catálogo completo, título a título.",
+      "bienvenidas": "Quiénes somos y por qué publicamos.",
+      "contacto": "Escríbenos: manuscritos, prensa, librerías."
+    }
+  },
+  "libros": {
+    "title": "Libros",
+    "lead": "Nuestro catálogo.",
+    "empty": "Todavía no hay títulos publicados. Los primeros llegan pronto.",
+    "shelfHint": "Estantería: pasa el cursor sobre un libro para ver la portada, haz clic para abrir su ficha.",
+    "openCall": "Convocatoria abierta"
+  },
+  "book": {
+    "notFoundTitle": "Título no encontrado",
+    "notFoundBody": "No encontramos este libro en nuestro catálogo.",
+    "author": "Autoría",
+    "pages": "Páginas",
+    "published": "Publicación",
+    "isbn": "ISBN",
+    "addToCart": "Añadir {title} a la cesta",
+    "added": "Añadido",
+    "addedTo": "{title} añadido a la cesta",
+    "notify": "Avísame",
+    "notifySubject": "Avísame cuando esté disponible: {title}",
+    "stock": {
+      "in_stock": "Disponible",
+      "low_stock": "Últimos ejemplares",
+      "out_of_stock": "Agotado",
+      "coming_soon": "Próximamente",
+      "preorder": "Reserva anticipada",
+      "out_of_print": "Descatalogado"
+    }
+  },
+  "merch": {
+    "chooseSize": "Elige tu talla"
+  },
+  "cart": {
+    "title": "Cesta",
+    "link": "Cesta, {count, plural, =0 {vacía} one {# libro} other {# libros}}",
+    "empty": "Tu cesta está vacía.",
+    "browse": "Ver libros",
+    "quantity": "Cantidad de {title}",
+    "decrease": "Quitar un ejemplar de {title}",
+    "increase": "Añadir un ejemplar de {title}",
+    "remove": "Quitar",
+    "removeLabel": "Quitar {title} de la cesta",
+    "subtotal": "Subtotal",
+    "shippingNote": "Envío a España y la UE. Pago seguro con Stripe.",
+    "checkout": "Pagar",
+    "redirecting": "Abriendo el pago…",
+    "errors": {
+      "notConfigured": "El pago en línea aún no está activo. Escríbenos a hola@bienavenidas.com para hacer tu pedido.",
+      "empty": "Tu cesta está vacía.",
+      "unavailable": "Algún título de tu cesta ya no está a la venta. Quítalo y vuelve a intentarlo.",
+      "outOfStock": "No quedan suficientes ejemplares de algún título. Reduce la cantidad o quítalo.",
+      "failed": "No pudimos abrir el pago. Inténtalo de nuevo en un momento."
+    },
+    "unavailableLine": "No disponible",
+    "outOfStockLine": "Sin ejemplares suficientes",
+    "thanksTitle": "¡Gracias!",
+    "thanksBody": "Hemos recibido tu pedido. Te llegará un recibo por correo{email, select, none {} other { a {email}}}.",
+    "thanksTotal": "Total pagado: {total}",
+    "pendingBody": "Tu pago se está procesando. Te escribiremos en cuanto se confirme.",
+    "unknownBody": "Si has completado el pago, te llegará un recibo por correo.",
+    "backToBooks": "Volver a los libros"
+  },
+  "bienvenidas": {
+    "title": "Bien*venidas",
+    "lead": "Nuestro manifiesto.",
+    "body": "Esta página recogerá el manifiesto de la editorial, la historia de la casa y los perfiles de quienes la habitan.",
+    "imageAlt": "Mural de BIEN*VENIDAS",
+    "panLabel": "Imagen navegable: arrastra, desplaza o usa las flechas para recorrerla."
+  },
+  "contacto": {
+    "title": "Contacto",
+    "intro": "Para manuscritos, colaboraciones\no cualquier otra petición:",
+    "social": {
+      "instagram": "Instagram",
+      "substack": "Substack",
+      "tiktok": "TikTok"
+    }
+  },
+  "newsletter": {
+    "open": "Apúntate a nuestra newsletter",
+    "heading": "Apúntate a nuestra newsletter\npara estar al día de todos nuestros\nlanzamientos\neventos\ndescuentos\ny pensamientos intrusivos.",
+    "placeholder": "email",
+    "submit": "suscríbeme",
+    "sending": "un momento…",
+    "success": "¡Listo! Ya estás en la lista.",
+    "close": "Cerrar",
+    "smallPrint": "Al suscribirte a la newsletter, aceptas recibir nuestras newsletter y la política de privacidad.\nPuedes darte de baja en cualquier momento a través del enlace que encontrarás en el mail.",
+    "errors": {
+      "email": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
+      "throttled": "Has hecho varios intentos seguidos. Espera unos minutos y vuelve a probar.",
+      "failed": "No hemos podido apuntarte. Inténtalo de nuevo en un momento."
+    }
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "La página que buscas no existe o cambió de lugar.",
+    "home": "Volver al inicio"
+  }
+}
