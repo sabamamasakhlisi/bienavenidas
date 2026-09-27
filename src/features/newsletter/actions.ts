@@ -1,10 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
-
 import { getLocale } from "next-intl/server";
 
 import { defaultLocale, isLocale } from "@/i18n/config";
+import { callerIp } from "@/lib/caller";
 
 import type { SubscribeState } from "./state";
 import { addSubscriber } from "./subscribers";
@@ -59,12 +58,6 @@ function remember(caller: string) {
   }
 }
 
-async function callerId() {
-  const list = await headers();
-  const forwarded = list.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || list.get("x-real-ip") || "unknown";
-}
-
 /**
  * Takes a newsletter sign-up from the contact page.
  *
@@ -89,7 +82,7 @@ export async function subscribe(
     return { status: "error", reason: "email" };
   }
 
-  const caller = await callerId();
+  const caller = (await callerIp()) ?? "unknown";
   if (tooMany(caller)) return { status: "error", reason: "throttled" };
 
   const rawLocale = await getLocale();

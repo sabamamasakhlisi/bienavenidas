@@ -189,12 +189,16 @@ export type NewOrder = {
  * All or nothing: returns the slugs that are short (and nothing is held), or
  * an empty list when every tracked line is now reserved under `reference`.
  * Returns null when Supabase isn't configured. Untracked titles are never
- * held. See `supabase/migrations/20260927130000_stock_reservations.sql`.
+ * held. See `supabase/migrations/20260927130000_stock_reservations.sql` and
+ * `20260927140000_reservation_per_caller.sql`.
  */
 export async function reserveStock(
   reference: string,
   items: { slug: string; quantity: number }[],
   expiresAt: Date,
+  /** Opaque key for who is checking out; their older holds beyond one are
+   * released, so no single visitor can sit on the shelf. Null: no limit. */
+  caller: string | null,
 ): Promise<string[] | null> {
   if (!isInventoryConfigured()) return null;
 
@@ -202,6 +206,7 @@ export async function reserveStock(
     p_reference: reference,
     p_items: items.map(({ slug, quantity }) => ({ slug, quantity })),
     p_expires_at: expiresAt.toISOString(),
+    p_caller: caller,
   });
   if (error) throw error;
 
