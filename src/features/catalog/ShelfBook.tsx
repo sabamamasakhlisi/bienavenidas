@@ -1,5 +1,7 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import type { Book } from "@/types/book";
 
 import { BookCover } from "./BookCover";
@@ -26,6 +28,8 @@ export function ShelfBook({
   onSelect,
   onFocus,
   onBlur,
+  foot = 0,
+  footWide = 0,
 }: {
   book: Book;
   title: string;
@@ -37,6 +41,10 @@ export function ShelfBook({
   onSelect: (slug: string) => void;
   onFocus: () => void;
   onBlur: () => void;
+  /** Space on the leading edge so a leaning neighbour rests against this
+   * rather than through it. The shelf works it out; see `clearances`. */
+  foot?: number;
+  footWide?: number;
 }) {
   const coverAspect = book.coverAspect ?? 0.66;
 
@@ -58,8 +66,10 @@ export function ShelfBook({
         transform: `rotate(${book.shelfLean ?? 0}deg)`,
         transitionDuration: `${SWING_MS}ms`,
         containerType: "inline-size",
-      }}
-      className="relative max-h-full shrink-0 origin-bottom cursor-pointer transition-[width] ease-out focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+        "--foot": `${foot}px`,
+        "--foot-md": `${footWide}px`,
+      } as CSSProperties}
+      className="shelf-item relative max-h-full shrink-0 origin-bottom cursor-pointer transition-[width] ease-out focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
     >
       <div className="relative h-full w-full [perspective:900px]">
         {/* The cover, hinged on the spine edge. */}

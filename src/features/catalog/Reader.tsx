@@ -139,17 +139,11 @@ export function Reader({
           const onLeft = index % 2 === 0;
 
           // Mirrored rather than merely nudged across: a right-hand block runs
-          // its columns in reverse and sets its text to match, so the quote
-          // still hugs the outer edge and the two sides read as a pair.
+          // its tracks in reverse and sets its text to match, so the quote
+          // still hugs the outer edge and the two sides read as a pair. The
+          // reversal lives in `.product-grid--mirrored`; see `globals.css`.
           // Logical properties (`text-start`/`text-end`) keep that true if an
           // RTL locale is ever added.
-          // `items-*` does double duty: stacked on mobile it decides which
-          // edge the blocks line up against, but in a desktop row it becomes
-          // vertical alignment — so both sides are pinned to the top there, or
-          // the right-hand quote would sink to the bottom of its row.
-          const alignment = onLeft
-            ? "items-start text-start md:flex-row md:items-start"
-            : "items-end text-end md:flex-row-reverse md:items-start";
 
           /**
            * What names the entry.
@@ -218,9 +212,15 @@ export function Reader({
                       </p>
                     )}
 
-                    {/* Pushed to the foot of its column so it lands level with
-                        the bottom of the cover beside it. */}
-                    <div className="mt-auto w-full">{control}</div>
+                    {/* Sits on the column's own rhythm rather than being
+                        pushed to the foot of it. Bottom-aligning it against the
+                        cover made the gap above depend on how much the entry
+                        had to say — 58px under one title, 130px under another —
+                        so the plates marched at different heights down the
+                        page. The same 12px under every one of them reads as a
+                        set; the slack now falls under the plate, where it is
+                        just the end of the block. */}
+                    <div className="w-full">{control}</div>
                   </div>
 
                   <div
@@ -261,10 +261,13 @@ export function Reader({
                 </div>
               </div>
 
-              {/* From `md`: the quote on its own until you open it. */}
+              {/* From `md`: the quote on its own until you open it, on the
+                  same three tracks every product block uses. */}
               <div className="hidden w-full md:block">
                 <div
-                  className={`flex w-full flex-col gap-8 md:gap-12 ${alignment}`}
+                  className={`product-grid w-full ${
+                    onLeft ? "" : "product-grid--mirrored"
+                  }`}
                 >
                   <button
                     type="button"
@@ -274,9 +277,12 @@ export function Reader({
                       isOpen ? `details-${view.book.slug}` : undefined
                     }
                     onClick={() => setChosen(isOpen ? null : view.book.slug)}
+                    style={{ gridArea: "lead" }}
                     // Buttons are centred by the UA stylesheet, which beats
                     // the alignment inherited from the block — so state it.
-                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] text-start`}
+                    className={`quote max-w-[46ch] cursor-pointer text-[15px] whitespace-pre-line text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:text-[17px] ${
+                      onLeft ? "text-start" : "justify-self-end text-end"
+                    }`}
                   >
                     {view.quote}
                   </button>
@@ -285,31 +291,37 @@ export function Reader({
                       open, because the closed state is genuinely just the
                       quote. */}
                   {isOpen && (
-                    <div
-                      id={`details-${view.book.slug}`}
-                      // Takes the width the quote doesn't, rather than sizing
-                      // to its own contents — otherwise the cover and colophon
-                      // are squeezed into a column barely wider than the cover.
-                      // `min-w-0` lets it shrink past its content when the
-                      // quote is long.
-                      className={`flex w-full min-w-0 flex-col gap-8 md:gap-12 ${alignment}`}
-                    >
+                    <>
+                      {/* The cover and the plate share one column: the price
+                          sits under the thing it is the price of, and lands on
+                          the same line as every other plate on this side. */}
                       <div
-                        className="w-full max-w-[200px] shrink-0"
-                        style={{
-                          aspectRatio: String(view.book.coverAspect ?? 0.66),
-                          containerType: "inline-size",
-                        }}
+                        id={`details-${view.book.slug}`}
+                        style={{ gridArea: "control" }}
+                        className="flex w-full flex-col"
                       >
-                        <BookCover
-                          book={view.book}
-                          title={view.title}
-                          image={view.book.detailImage}
-                          sizes="(max-width: 768px) 60vw, 200px"
-                        />
+                        <div
+                          className="w-full"
+                          style={{
+                            aspectRatio: String(view.book.coverAspect ?? 0.66),
+                            containerType: "inline-size",
+                          }}
+                        >
+                          <BookCover
+                            book={view.book}
+                            title={view.title}
+                            image={view.book.detailImage}
+                            sizes="(max-width: 768px) 60vw, 200px"
+                          />
+                        </div>
+
+                        <div className="mt-4 w-full">{control}</div>
                       </div>
 
-                      <div className="flex max-w-[42ch] flex-col gap-3 text-[12px] leading-relaxed">
+                      <div
+                        style={{ gridArea: "text" }}
+                        className="flex flex-col gap-3 text-[12px] leading-relaxed"
+                      >
                         {heading}
 
                         <p className="text-muted">{view.description}</p>
@@ -319,10 +331,8 @@ export function Reader({
                             {view.credits}
                           </p>
                         )}
-
-                        <div className="mt-2 w-full">{control}</div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>

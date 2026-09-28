@@ -64,37 +64,17 @@ export default function CondicionesPage() {
 
       <LegalSection title="5. Cambios y devoluciones">
         <p>
-          Tienes 14 días desde que recibes el pedido para devolverlo, sin
-          necesidad de dar explicaciones. Los libros que nos devuelvas deben
-          estar como nuevos. Los gastos de devolución corren de tu cuenta,
-          salvo que el error sea nuestro.
-        </p>
-        <p>
-          Te devolvemos el importe del pedido, incluido el envío original, en
-          un plazo máximo de 14 días desde que recibimos los productos, por el
-          mismo medio de pago.
-        </p>
-        <p>
-          Devuélvenos los productos en un embalaje seguro y resistente, junto
-          con tu número de pedido y la factura o el recibo. Escríbenos a{" "}
-          <LegalMail email={CONTACT_EMAIL} /> y te indicaremos la dirección
-          de devolución.
+         No se aceptan cambios ni devoluciones. 
+         En caso de que el pedido recibido sea incorrecto o presente algún defecto imputable a nuestra parte,
+          y no a la empresa de transporte,  
+         puedes ponerte en contacto con nosotras para que podamos revisar tu caso y ofrecerte una solución adecuada.
         </p>
       </LegalSection>
 
-      <LegalSection title="6. Productos defectuosos">
-        <p>
-          Si algo llega dañado o con un defecto, escríbenos con una foto y te
-          lo cambiamos o te devolvemos el dinero, sin coste para ti. Los
-          productos tienen la garantía legal de tres años.
-        </p>
-      </LegalSection>
 
-      <LegalSection title="7. Ley aplicable">
+      <LegalSection title="6. Ley aplicable">
         <p>
-          Estas condiciones se rigen por la legislación española. Si eres
-          consumidora o consumidor, puedes acudir a los tribunales de tu
-          domicilio.
+          Estas condiciones se rigen por la legislación española.
         </p>
       </LegalSection>
     </LegalPage>
