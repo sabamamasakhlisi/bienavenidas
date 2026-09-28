@@ -90,10 +90,20 @@ body {
  * Reduced motion means less movement, not no feedback.
  *
  * This used to flatten every transition on the page to 0.01ms, which left
- * interactive states snapping with no indication anything had happened.
- * Looping animations and smooth-scrolling are the things that actually cause
- * trouble, so those go; components drop their own movement (3D swings, slides)
- * through `motion-reduce:` utilities and keep their fades.
+ * interactive states snapping with no indication anything had happened. What
+ * actually causes trouble is motion nobody asked for and motion that does not
+ * stop — so smooth-scrolling and looping animations go, and transitions that
+ * answer something the reader just did are kept.
+ *
+ * The shelf's book turn is kept as well, deliberately, and for everyone. It
+ * is not decoration that could be dropped without loss: a spine turning to a
+ * cover is how the shelf says what a title is, and there is no second telling
+ * of it. It is also the mild kind of movement — one object the size of a
+ * paperback, turning in place, over and done in 700ms, and in the usual case
+ * because the reader put a cursor on it. Worth knowing that the shelf's
+ * opening sequence turns two or three books on its own before anyone has
+ * touched anything; that is the part a reader who set this preference would
+ * have grounds to object to, and the lever to reach for if it ever comes up.
  */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -254,11 +264,151 @@ body:has([data-ground="poster"]) {
  */
 .shelf-spine {
   transform: rotate(var(--lean, 0deg));
+  /*
+   * Held back off full strength.
+   *
+   * The palette is authored at the saturation it wants to be looked at on its
+   * own; a dozen of them side by side on a dark ground is a different matter,
+   * and the brightest few were pulling the eye off the books they stand among.
+   * Taken off the drawn colour rather than out of it, so the catalogue keeps
+   * saying what it means and the shelf decides how loudly to say it.
+   */
+  filter: saturate(0.8);
+  /*
+   * Modelling, so a spine is a board and not a strip of paper.
+   *
+   * The same light the books turn in: coming from the front left, so each
+   * spine is brightest a little in from that edge and falls away across its
+   * width. The dark first pixels are the crack between it and whatever it
+   * stands against — a real row of books is darkest where two of them meet,
+   * and it is that line, more than any amount of shading, that stops the row
+   * reading as one flat ribbon.
+   */
+  background-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0.42) 0,
+    rgb(0 0 0 / 0.1) 3px,
+    rgb(255 255 255 / 0.08) 25%,
+    rgb(0 0 0 / 0) 58%,
+    rgb(0 0 0 / 0.26) 100%
+  );
+}
+
+/*
+ * One curve for everything the shelf moves.
+ *
+ * The book turning, the widths the rest of the row gives up to let it, and the
+ * light coming round with it are three halves of the same gesture. Given
+ * separate easings they arrive at slightly different times and the row reads
+ * as several things that happened to move at once.
+ */
+:root {
+  --shelf-ease: cubic-bezier(0.22, 0.75, 0.2, 1);
+}
+
+/*
+ * A title on the shelf is a box, not a picture of one.
+ *
+ * Two faces set at a right angle — the front cover, and the spine across its
+ * leading edge — revolving together about the axis that runs down the middle
+ * of the book. Closed, the spine is square to the reader and the cover is
+ * edge-on behind it; open, they have traded places. Halfway through, both are
+ * in view at once, and that is the moment that reads as thickness.
+ *
+ * The axis is the middle of the box and not one of its edges, which is the
+ * whole difference between a book being turned round and a cover being swung
+ * open on a hinge. So the faces are placed off the centre line rather than off
+ * the left edge, and nothing has to slide sideways to make up for a pivot in
+ * the wrong place.
+ *
+ * Only the box moves. Each face is fixed within it, which means one animated
+ * transform for the whole thing rather than one per face that could come
+ * apart mid-turn.
+ *
+ * The angle travels as a custom property rather than an inline transform so
+ * that the shape of the transform and the transition that drives it stay in
+ * one place, and the component hands down numbers rather than geometry.
+ * `ShelfBook` sets every property this reads.
+ */
+.shelf-box {
+  perspective: var(--eye);
+}
+
+.shelf-turn {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(var(--push, 0px)) rotateY(var(--swing, 90deg));
+  transition: transform var(--swing-ms, 700ms) var(--shelf-ease);
+}
+
+.shelf-cover {
+  left: calc(50% - var(--face) / 2);
+  width: var(--face);
+  transform: translateZ(calc(var(--spine-w) / 2));
+  backface-visibility: hidden;
+}
+
+/* The same modelling the scenery gets, so a title closed on the shelf is made
+   of the same stuff as the spines either side of it. */
+.shelf-spine-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0.42) 0,
+    rgb(0 0 0 / 0.1) 3px,
+    rgb(255 255 255 / 0.06) 25%,
+    rgb(0 0 0 / 0) 58%,
+    rgb(0 0 0 / 0.2) 100%
+  );
+}
+
+.shelf-spine-face {
+  left: calc(50% - var(--spine-w) / 2);
+  width: var(--spine-w);
+  transform: rotateY(-90deg) translateZ(calc(var(--face) / 2));
+  backface-visibility: hidden;
+}
+
+/*
+ * Shading is what makes the turn read as a turn: a face angled away from the
+ * light goes down, and comes back up as it comes round. Strength is driven
+ * from `--shut` — 1 closed, 0 open — so both faces are lit by the one state.
+ */
+.shelf-shade {
+  transition: opacity var(--swing-ms, 700ms) var(--shelf-ease);
+}
+
+.shelf-shade--cover {
+  background: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0) 0%,
+    rgb(0 0 0 / 0.12) 55%,
+    rgb(0 0 0 / 0.5) 100%
+  );
+  /* Clear by the time the cover is square to the reader — a face that is no
+     longer turned has no far edge left to be in its own shade, and a gradient
+     still lying across it would read as a mark on the artwork. */
+  opacity: var(--shut, 1);
+}
+
+.shelf-shade--spine {
+  background: linear-gradient(
+    270deg,
+    rgb(0 0 0 / 0) 0%,
+    rgb(0 0 0 / 0.3) 45%,
+    rgb(0 0 0 / 0.62) 100%
+  );
+  opacity: calc(1 - var(--shut, 1));
 }
 
 /* Room for a leaning item's foot to stand clear of what it rests against. */
 .shelf-item {
   margin-inline-start: var(--foot, 0px);
+  /* The width every item gives up, or takes back, as one of them turns. */
+  transition-timing-function: var(--shelf-ease);
 }
 
 @media (min-width: 768px) {
