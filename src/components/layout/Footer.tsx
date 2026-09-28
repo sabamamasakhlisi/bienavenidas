@@ -33,16 +33,18 @@ export function Footer() {
         "grid gap-y-2 px-6 py-6 text-center text-[12px] md:grid-cols-[1fr_auto_1fr] md:items-center",
         light ? "text-[#4B3B3B]" : "text-foreground",
         pinned && "absolute inset-x-0 bottom-0",
-        // Contacto's watermark runs to the edge; everywhere else light, a solid
-        // strip, like the header's, keeps the text off the poster.
-        light && !onContacto && "bg-[#E5E2E2]",
       ]
         .filter(Boolean)
         .join(" ")}
     >
+      {/* Contacto already gives the address its own line, in type meant to be
+          read; repeating it in the footer of a one-screen page only crowds a
+          phone. It stays from `md`, where there is room for the full row. */}
       <a
         href={`mailto:${CONTACT_EMAIL}`}
-        className="opacity-70 transition-opacity hover:opacity-100 md:justify-self-start"
+        className={`opacity-70 transition-opacity hover:opacity-100 md:justify-self-start ${
+          onContacto ? "hidden md:block" : ""
+        }`}
       >
         {CONTACT_EMAIL}
       </a>

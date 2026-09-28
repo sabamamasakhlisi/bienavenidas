@@ -21,7 +21,7 @@ const books: Book[] = [
     price: { amount: 1600, currency: "EUR" },
     stock: "in_stock",
     pageCount: 232,
-    publishedAt: "2016-01-01",
+    publishedAt: "2016-01-28",
     credits: "cc. 2016 TIQQUN\nPrimera edición\nDiseño por Bernardina Studio",
     spine: { color: "#6f5257", width: 26 },
     coverTone: "#4a3a3d",

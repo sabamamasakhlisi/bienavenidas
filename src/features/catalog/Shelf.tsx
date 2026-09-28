@@ -117,19 +117,18 @@ const FIRST_LEAN_MD = 0;
 const LAST_LEAN_MD = -5;
 
 /**
- * How far the last spine's foot is pushed out from its neighbour.
+ * How far a leaning item reaches sideways into what stands next to it.
  *
- * A leaning spine pivots on its base, so its top corner swings across whatever
- * stands beside it — at this height a 5° tilt carries it a third of the way
- * through the spine before it, which reads as sunk rather than propped. The
- * foot moves out by exactly that overhang, so the top comes to rest against
- * its neighbour instead of passing through it, and the gap opens at the bottom
- * the way it does under a real book that is leaning on the next one.
+ * Everything on the shelf pivots on its base, so a tilt swings the top corner
+ * across its neighbour: at shelf height a 5° lean carries it some 38px, where
+ * the gap between items is 5. Left unaccounted for, a spine looks sunk into
+ * the one beside it rather than propped against it.
  *
- * Returns the extra space in px: the overhang measured at the height of the
- * neighbour's top edge, less the gap already between them.
+ * Measured at the height of the neighbour's top edge, because that is the
+ * highest point the two can actually meet — above it the leaning item simply
+ * passes over open air.
  */
-function leanFoot(lean: number, width: number, neighbourHeight: number) {
+function leanReach(lean: number, width: number, neighbourHeight: number) {
   if (!lean || neighbourHeight <= 0) return 0;
 
   const radians = (Math.abs(lean) * Math.PI) / 180;
@@ -137,11 +136,10 @@ function leanFoot(lean: number, width: number, neighbourHeight: number) {
   const cos = Math.cos(radians);
   const half = width / 2;
 
-  // How far up the tilted edge is when it reaches the neighbour's top.
-  const reach = (neighbourHeight + half * sin) / cos;
-  const overhang = reach * sin - half * (1 - cos);
+  // How far up the tilted edge is when it arrives at the neighbour's top.
+  const climb = (neighbourHeight + half * sin) / cos;
 
-  return Math.max(0, overhang - GAP);
+  return climb * sin - half * (1 - cos);
 }
 
 /**
@@ -497,13 +495,84 @@ export function Shelf({
     return natural[index] * flexFactor;
   });
 
+  /** The angle an item stands at, which differs at the row's ends on a wide
+   * shelf. Books lean the same however wide the screen is. */
+  const leanOf = (item: ShelfItem, index: number, wide: boolean) => {
+    if (item.kind !== "spine") return books[item.slug].book.shelfLean ?? 0;
+    const lean = item.lean ?? 0;
+    if (!wide) return lean;
+    if (index === 0) return FIRST_LEAN_MD;
+    if (index === shelf.length - 1) return LAST_LEAN_MD;
+    return lean;
+  };
+
+  /** How tall an item stands, in px. */
+  const heightOf = (item: ShelfItem) =>
+    item.kind === "spine"
+      ? (rowHeight ?? 0) * (item.height / 100)
+      : standingOf(books[item.slug].book);
+
+  /**
+   * Extra space each item needs on its leading edge so nothing overlaps.
+   *
+   * Taken pair by pair, because either side can be the one intruding: an item
+   * leaning back reaches into what precedes it, and one leaning forward reaches
+   * into what follows. Whichever reach is longer decides the pair, and the
+   * space is added in front of the second of the two — which is the same thing
+   * as pushing a leaning book's foot out until its top rests on its neighbour
+   * instead of passing through it.
+   *
+   * Computed per breakpoint: a phone hides most of the scenery, so the items
+   * that end up side by side there are not the ones that are side by side on a
+   * wide screen.
+   */
+  const clearances = (wide: boolean) => {
+    const feet = shelf.map(() => 0);
+    let previous = -1;
+
+    shelf.forEach((item, index) => {
+      if (!wide && !compactShelf.has(item)) return;
+
+      if (previous >= 0) {
+        const before = shelf[previous];
+        const leanBefore = leanOf(before, previous, wide);
+        const leanHere = leanOf(item, index, wide);
+
+        // Added, not compared. Two items can lean *towards* each other — one
+        // tipping forward while the next tips back — and then each eats into
+        // the space from its own side, so the gap has to cover both reaches.
+        // Taking the larger of the two left the pair short by exactly the
+        // smaller one, which is how a +4° spine ended up 24px inside the −3°
+        // spine beside it. Either term is zero when that side leans away.
+        const need =
+          (leanHere < 0
+            ? leanReach(leanHere, widths[index], heightOf(before))
+            : 0) +
+          (leanBefore > 0
+            ? leanReach(leanBefore, widths[previous], heightOf(item))
+            : 0);
+
+        // Rounded up: the browser lays out on fractional pixels and the last
+        // tenth of a millimetre of contact still reads as a seam.
+        feet[index] = Math.max(0, Math.ceil(need - GAP));
+      }
+
+      previous = index;
+    });
+
+    return feet;
+  };
+
+  const feetWide = clearances(true);
+  const feetCompact = clearances(false);
+
   return (
     <section
       aria-label={hint}
       // Short of the full screen on a phone: a shelf that fills the viewport
       // leaves nothing below it to suggest the page continues, and the covers
       // are bounded by the row's height either way.
-      className="relative flex h-[60svh] flex-col justify-end overflow-hidden md:h-[calc(100svh-var(--hdr-h))]"
+      className="relative flex h-[80svh] flex-col justify-end overflow-hidden md:h-[calc(100svh-var(--hdr-h))]"
     >
       <div
         ref={rowRef}
@@ -521,26 +590,8 @@ export function Shelf({
         {shelf.map((item, index) => {
           if (item.kind === "spine") {
             const lean = item.lean ?? 0;
-            const isLast = index === shelf.length - 1;
-            const leanMd =
-              index === 0
-                ? FIRST_LEAN_MD
-                : isLast
-                  ? LAST_LEAN_MD
-                  : lean;
+            const leanMd = leanOf(item, index, true);
 
-            // Only the last one, and only where it leans: the spines in the
-            // middle lean among other leaning spines, which is the shelf's
-            // texture rather than a book propped on the end of a row.
-            const neighbour = isLast ? shelf[index - 1] : undefined;
-            const footMd =
-              neighbour?.kind === "spine" && rowHeight
-                ? leanFoot(
-                    leanMd,
-                    widths[index],
-                    rowHeight * (neighbour.height / 100),
-                  )
-                : 0;
 
             return (
               <div
@@ -555,11 +606,12 @@ export function Shelf({
                     // `transform` here, or the wide-screen rule could not win.
                     "--lean": `${lean}deg`,
                     "--lean-md": `${leanMd}deg`,
-                    "--foot-md": `${footMd}px`,
+                    "--foot": `${feetCompact[index]}px`,
+                    "--foot-md": `${feetWide[index]}px`,
                     transitionDuration: "700ms",
                   } as CSSProperties
                 }
-                className={`shelf-spine shrink-0 origin-bottom transition-[width] ease-out ${
+                className={`shelf-item shelf-spine shrink-0 origin-bottom transition-[width] ease-out ${
                   compactShelf.has(item) ? "" : "hidden md:block"
                 }`}
               />
@@ -574,6 +626,8 @@ export function Shelf({
               key={item.slug}
               book={entry.book}
               title={entry.title}
+              foot={feetCompact[index]}
+              footWide={feetWide[index]}
               open={openSlug === item.slug}
               width={widths[index]}
               openWidth={openWidthOf(entry.book)}

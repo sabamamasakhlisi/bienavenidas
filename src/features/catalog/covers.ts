@@ -174,9 +174,13 @@ export function attachCovers(books: Book[]): Book[] {
 }
 
 /**
- * The cover as a file link previews can show. WhatsApp, Facebook and most
- * other scrapers don't read AVIF or WebP, so this looks only for the JPEG or
- * PNG that `pnpm covers` keeps beside them.
+ * The cover as a file link previews can show.
+ *
+ * WhatsApp, Facebook, Slack and most other scrapers read neither AVIF nor
+ * WebP, and several drop an image they cannot decode rather than falling back
+ * — which is how a title ends up sharing as the site's generic card. So this
+ * looks first for the JPEG `pnpm covers` writes for exactly this purpose, then
+ * for an original in a format a scraper would have taken anyway.
  */
 export function shareImageFor(book: Book): string | undefined {
   // Follows `coverPending` too. This is the one place the art would travel
@@ -184,7 +188,7 @@ export function shareImageFor(book: Book): string | undefined {
   // cover that isn't ready must not reach it.
   const stem = book.coverPending ? `${book.slug}.detail` : book.slug;
 
-  for (const ext of ["jpg", "jpeg", "png"]) {
+  for (const ext of ["share.jpg", "jpg", "jpeg", "png"]) {
     const file = `${stem}.${ext}`;
     if (existsSync(path.join(COVERS_DIR, file))) return `/covers/${file}`;
   }
