@@ -611,7 +611,7 @@ export function Shelf({
                     transitionDuration: "700ms",
                   } as CSSProperties
                 }
-                className={`shelf-item shelf-spine shrink-0 origin-bottom transition-[width] ease-out ${
+                className={`shelf-item shelf-spine shrink-0 origin-bottom transition-[width] ${
                   compactShelf.has(item) ? "" : "hidden md:block"
                 }`}
               />
@@ -631,6 +631,9 @@ export function Shelf({
               open={openSlug === item.slug}
               width={widths[index]}
               openWidth={openWidthOf(entry.book)}
+              // The book's own thickness — the width it has closed, whatever
+              // width it is being drawn at right now.
+              closedWidth={natural[index]}
               onSelect={handleSelect}
               onFocus={() => setFocusedSlug(item.slug)}
               onBlur={() =>
