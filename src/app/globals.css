@@ -265,16 +265,6 @@ body:has([data-ground="poster"]) {
 .shelf-spine {
   transform: rotate(var(--lean, 0deg));
   /*
-   * Held back off full strength.
-   *
-   * The palette is authored at the saturation it wants to be looked at on its
-   * own; a dozen of them side by side on a dark ground is a different matter,
-   * and the brightest few were pulling the eye off the books they stand among.
-   * Taken off the drawn colour rather than out of it, so the catalogue keeps
-   * saying what it means and the shelf decides how loudly to say it.
-   */
-  filter: saturate(0.8);
-  /*
    * Modelling, so a spine is a board and not a strip of paper.
    *
    * The same light the books turn in: coming from the front left, so each
@@ -285,7 +275,7 @@ body:has([data-ground="poster"]) {
    * reading as one flat ribbon.
    */
   background-image: linear-gradient(
-    90deg,
+    84deg,
     rgb(0 0 0 / 0.42) 0,
     rgb(0 0 0 / 0.1) 3px,
     rgb(255 255 255 / 0.08) 25%,
@@ -356,7 +346,7 @@ body:has([data-ground="poster"]) {
   position: absolute;
   inset: 0;
   background-image: linear-gradient(
-    90deg,
+    84deg,
     rgb(0 0 0 / 0.42) 0,
     rgb(0 0 0 / 0.1) 3px,
     rgb(255 255 255 / 0.06) 25%,

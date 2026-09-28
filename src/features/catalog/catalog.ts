@@ -122,43 +122,67 @@ const books: Book[] = [
  * Spines are unlabelled stock — they give the shelf its density without
  * pretending to be real catalogue entries. Heights are percentages of the
  * shelf's own height so the arrangement keeps its proportions at any size.
+ *
+ * Seven shades, and only these seven — blue, peach, mint, pink, a deeper
+ * pink, lime and white. Seven because a wide screen shows seven spines and no
+ * two of them should be the same colour: a repeat on a row this short reads as
+ * a mistake rather than a rhythm. The two pinks are a step apart rather than
+ * two colours, so the shelf is really drawn in six.
+ *
+ * The whole run is on the palette, not just the spines that happen to show.
+ * Which ones show is worked out from the trim, so colouring only today's
+ * survivors would come apart the moment the row got longer or shorter — and
+ * the two pinks are kept away from each other throughout, since the one place
+ * a near-repeat would be read as an accident is side by side.
+ *
+ * `compact` marks the two that stand on the phone, where a title and a spine
+ * either side of it is the whole shelf. They are the blue and the pink: two
+ * spines is too few for any pair that could be mistaken for one colour.
  */
 export type ShelfItem =
-  | { kind: "spine"; color: string; width: number; height: number; lean?: number }
+  | {
+      kind: "spine";
+      color: string;
+      width: number;
+      height: number;
+      lean?: number;
+      /** Stands on the phone's shelf too, where only two spines fit. */
+      compact?: true;
+    }
   | { kind: "book"; slug: string };
 
 export const shelfLayout: ShelfItem[] = [
-  { kind: "spine", color: "#e7b9d4", width: 24, height: 54, lean: -4 },
-  { kind: "spine", color: "#2f5f9e", width: 38, height: 50, lean: -6 },
-  { kind: "spine", color: "#d6d4cf", width: 40, height: 59 },
-  { kind: "spine", color: "#8fd3ae", width: 52, height: 54 },
+  { kind: "spine", color: "#61A0D3", width: 24, height: 54, lean: -4, compact: true },
+  { kind: "spine", color: "#FFBDA5", width: 38, height: 50, lean: -6 },
+  { kind: "spine", color: "#A4E0BC", width: 40, height: 59 },
+  { kind: "spine", color: "#E5E2E2", width: 52, height: 54 },
   { kind: "book", slug: "joven-chica" },
-  { kind: "spine", color: "#5aa8e6", width: 30, height: 57, lean: 4 },
-  { kind: "spine", color: "#e8e6e1", width: 44, height: 52 },
-  { kind: "spine", color: "#7c2e45", width: 26, height: 49, lean: 3 },
-  { kind: "spine", color: "#c89a72", width: 60, height: 50, lean: 5 },
-  { kind: "spine", color: "#3f4a6b", width: 42, height: 56, lean: -3 },
+  { kind: "spine", color: "#E6A8D4", width: 30, height: 57, lean: 4 },
+  { kind: "spine", color: "#E6F5C0", width: 44, height: 52 },
+  { kind: "spine", color: "#A4E0BC", width: 26, height: 49, lean: 3 },
+  { kind: "spine", color: "#E5E2E2", width: 60, height: 50, lean: 5 },
+  { kind: "spine", color: "#F5C8E8", width: 42, height: 56, lean: -3, compact: true },
   { kind: "book", slug: "witches-used-to-rule-the-web" },
-  { kind: "spine", color: "#f0efe9", width: 36, height: 51 },
-  { kind: "spine", color: "#6b7a52", width: 48, height: 58, lean: 2 },
-  { kind: "spine", color: "#d9c05a", width: 28, height: 50, lean: -2 },
-  { kind: "spine", color: "#6f5257", width: 38, height: 53 },
-  { kind: "spine", color: "#b8452f", width: 42, height: 47, lean: 4 },
-  { kind: "spine", color: "#d6d4cf", width: 34, height: 57 },
-  { kind: "spine", color: "#e7b9d4", width: 56, height: 52, lean: -3 },
-  { kind: "spine", color: "#2f5f9e", width: 44, height: 55 },
-  { kind: "spine", color: "#8fd3ae", width: 40, height: 48, lean: 3 },
-  { kind: "spine", color: "#e8e6e1", width: 30, height: 58 },
-  { kind: "spine", color: "#5aa8e6", width: 50, height: 51, lean: -4 },
+  { kind: "spine", color: "#61A0D3", width: 36, height: 51 },
+  { kind: "spine", color: "#FFBDA5", width: 48, height: 58, lean: 2 },
+  { kind: "spine", color: "#E6F5C0", width: 28, height: 50, lean: -2 },
+  { kind: "spine", color: "#E6A8D4", width: 38, height: 53 },
+  { kind: "spine", color: "#E5E2E2", width: 42, height: 47, lean: 4 },
+  { kind: "spine", color: "#A4E0BC", width: 34, height: 57 },
+  { kind: "spine", color: "#61A0D3", width: 56, height: 52, lean: -3 },
+  { kind: "spine", color: "#FFBDA5", width: 44, height: 55 },
+  { kind: "spine", color: "#E6F5C0", width: 40, height: 48, lean: 3 },
+  { kind: "spine", color: "#F5C8E8", width: 30, height: 58 },
+  { kind: "spine", color: "#E5E2E2", width: 50, height: 51, lean: -4 },
   { kind: "book", slug: "open-call-sad-girls" },
-  { kind: "spine", color: "#c89a72", width: 42, height: 53 },
-  { kind: "spine", color: "#3f4a6b", width: 38, height: 49, lean: 2 },
-  { kind: "spine", color: "#f0efe9", width: 42, height: 56 },
-  { kind: "spine", color: "#7c2e45", width: 46, height: 50, lean: -3 },
-  { kind: "spine", color: "#6b7a52", width: 32, height: 54 },
-  { kind: "spine", color: "#d9c05a", width: 58, height: 52, lean: 4 },
-  { kind: "spine", color: "#6f5257", width: 28, height: 47 },
-  { kind: "spine", color: "#b8452f", width: 44, height: 55, lean: -2 },
+  { kind: "spine", color: "#A4E0BC", width: 42, height: 53 },
+  { kind: "spine", color: "#E6A8D4", width: 38, height: 49, lean: 2 },
+  { kind: "spine", color: "#E5E2E2", width: 42, height: 56 },
+  { kind: "spine", color: "#61A0D3", width: 46, height: 50, lean: -3 },
+  { kind: "spine", color: "#FFBDA5", width: 32, height: 54 },
+  { kind: "spine", color: "#E6F5C0", width: 58, height: 52, lean: 4 },
+  { kind: "spine", color: "#F5C8E8", width: 28, height: 47 },
+  { kind: "spine", color: "#A4E0BC", width: 44, height: 55, lean: -2 },
 ];
 
 /**
