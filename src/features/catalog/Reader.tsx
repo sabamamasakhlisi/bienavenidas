@@ -218,9 +218,15 @@ export function Reader({
                       </p>
                     )}
 
-                    {/* Pushed to the foot of its column so it lands level with
-                        the bottom of the cover beside it. */}
-                    <div className="mt-auto w-full">{control}</div>
+                    {/* Sits on the column's own rhythm rather than being
+                        pushed to the foot of it. Bottom-aligning it against the
+                        cover made the gap above depend on how much the entry
+                        had to say — 58px under one title, 130px under another —
+                        so the plates marched at different heights down the
+                        page. The same 12px under every one of them reads as a
+                        set; the slack now falls under the plate, where it is
+                        just the end of the block. */}
+                    <div className="w-full">{control}</div>
                   </div>
 
                   <div

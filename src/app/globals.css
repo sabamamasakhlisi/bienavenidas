@@ -244,10 +244,17 @@ body:has([data-ground="poster"]) {
   transform: rotate(var(--lean, 0deg));
 }
 
+/* Room for a leaning item's foot to stand clear of what it rests against. */
+.shelf-item {
+  margin-inline-start: var(--foot, 0px);
+}
+
 @media (min-width: 768px) {
   .shelf-spine {
     transform: rotate(var(--lean-md, var(--lean, 0deg)));
-    /* Room for a leaning spine's foot to stand clear of its neighbour. */
-    margin-inline-start: var(--foot-md, 0px);
+  }
+
+  .shelf-item {
+    margin-inline-start: var(--foot-md, var(--foot, 0px));
   }
 }

@@ -39,17 +39,32 @@ const ORIGINALS = /\.(jpe?g|png)$/i;
 /** Anything worth measuring, whether this script made it or not. */
 const IMAGES = /\.(jpe?g|png|webp|avif)$/i;
 
+/**
+ * The copy link previews get.
+ *
+ * WhatsApp, Facebook, Slack and most other scrapers read neither AVIF nor
+ * WebP, and several ignore an image they cannot decode rather than falling
+ * back — which is how a book ends up sharing as the site's generic card. So
+ * every cover keeps a plain JPEG beside it, written here.
+ *
+ * Suffixed rather than plain `.jpg` so the next run cannot mistake it for an
+ * original and re-encode the whole chain from it.
+ */
+const SHARE = ".share.jpg";
+
 /** Where the measurements land, relative to the repository root. */
 const MANIFEST = "src/features/catalog/art-aspects.json";
 
 /** stem -> width ÷ height, per folder. */
 const aspects = {};
 
+let shared = 0;
+
 const kb = async (f) => Math.round((await stat(f)).size / 1024) + " KB";
 
 for (const { dir, maxWidth } of SOURCES) {
   const all = await readdir(dir);
-  const files = all.filter((f) => ORIGINALS.test(f));
+  const files = all.filter((f) => ORIGINALS.test(f) && !f.endsWith(SHARE));
 
   /*
    * Measure every picture in the folder, not only the ones converted below.
@@ -64,15 +79,33 @@ for (const { dir, maxWidth } of SOURCES) {
   aspects[folder] ??= {};
   const measured = new Set();
 
-  for (const file of [...files, ...all.filter((f) => IMAGES.test(f))]) {
+  for (const file of [
+    ...files,
+    ...all.filter((f) => IMAGES.test(f) && !f.endsWith(SHARE)),
+  ]) {
     const stem = file.replace(IMAGES, "");
     if (measured.has(stem)) continue;
     measured.add(stem);
-    const { width, height } = await sharp(path.join(dir, file), {
+    const source = path.join(dir, file);
+    const { width, height } = await sharp(source, {
       limitInputPixels: false,
     }).metadata();
     if (width && height) {
       aspects[folder][stem] = Number((width / height).toFixed(4));
+    }
+
+    // Only the faces a link preview can show: the cover itself, and the entry
+    // image that stands in for one while the cover is unfinished. A spine is
+    // a 60px strip — nothing to put on a card.
+    if (folder === "covers" && !stem.endsWith(".spine")) {
+      await sharp(source, { limitInputPixels: false })
+        .resize({ width: maxWidth, withoutEnlargement: true })
+        // Flattened onto the page's own ground: a transparent PNG turns black
+        // in a JPEG, and a black rectangle is a worse card than no card.
+        .flatten({ background: "#221e1f" })
+        .jpeg({ quality: 82, mozjpeg: true })
+        .toFile(path.join(dir, `${stem}${SHARE}`));
+      shared += 1;
     }
   }
 
@@ -125,3 +158,4 @@ const total = Object.values(aspects).reduce(
   0,
 );
 console.log(`\n${MANIFEST}: ${total} measured`);
+console.log(`${SHARE} written for ${shared} covers (link previews)`);
