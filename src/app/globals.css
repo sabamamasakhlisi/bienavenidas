@@ -33,6 +33,17 @@
    * arrangement there is — the merch row, at about 1120px.
    */
   --content-max: 1200px;
+
+  /*
+   * The two fixed tracks every product block shares.
+   *
+   * A price plate is the thing a reader's eye returns to down the page, so it
+   * stands in the same column for a book and for a shirt alike. Fixed rather
+   * than content-sized: a track that sizes to its contents moves whenever the
+   * copy beside it changes length, and then no two blocks line up.
+   */
+  --col-control: 200px;
+  --col-text: 32ch;
 }
 
 @media (min-width: 768px) {
@@ -130,7 +141,8 @@ body {
        centred *box* would still leave its spare width on one side. */
     justify-content: center;
     gap: 0.75rem 2.5rem;
-    grid-template-columns: minmax(0, 520px) 14rem minmax(0, 32ch);
+    /* The same tracks the book entries use, so the plates share a line. */
+    grid-template-columns: minmax(0, 1fr) var(--col-control) var(--col-text);
     grid-template-rows: auto auto 1fr;
     grid-template-areas:
       "art picker title"
@@ -257,4 +269,31 @@ body:has([data-ground="poster"]) {
   .shelf-item {
     margin-inline-start: var(--foot-md, var(--foot, 0px));
   }
+}
+
+/*
+ * One geometry for everything the shop sells.
+ *
+ * Three tracks: the lead — a pull-quote for a book, a photograph for merch —
+ * then what you choose with, then what the thing is. Only the lead flexes, so
+ * the control column lands at the same place in every block however long the
+ * copy runs.
+ *
+ * Entries alternate down the page, and a mirrored one reverses the tracks
+ * rather than nudging the content across, so its quote still hugs the outer
+ * edge. Its plates then line up with each other on their own side — two
+ * columns down the page, one per orientation, which is the alternation doing
+ * what it was drawn to do.
+ */
+.product-grid {
+  display: grid;
+  align-items: start;
+  gap: 0 2.5rem;
+  grid-template-columns: minmax(0, 1fr) var(--col-control) var(--col-text);
+  grid-template-areas: "lead control text";
+}
+
+.product-grid--mirrored {
+  grid-template-columns: var(--col-text) var(--col-control) minmax(0, 1fr);
+  grid-template-areas: "text control lead";
 }

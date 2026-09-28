@@ -45,13 +45,17 @@ export function MerchSection({
           <SizePicker merch={merch} />
         </div>
 
+        {/* Capped and centred in its track. The lead column now stretches to
+            whatever the fixed columns leave, and a photograph that grows with
+            it would tower over the books' covers instead of sitting beside
+            them as one more thing on the same page. */}
         <div
           style={{
             gridArea: "art",
             aspectRatio: String(merch.imageAspect),
             containerType: "inline-size",
           }}
-          className="w-full"
+          className="w-full max-w-[520px] justify-self-center"
         >
           <MerchArt merch={merch} sizes="(max-width: 767px) 45vw, 520px" />
         </div>
