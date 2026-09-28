@@ -2,6 +2,8 @@
 
 import { useCallback, useImperativeHandle, useRef, useState } from "react";
 
+import Link from "next/link";
+
 import { useTranslations } from "next-intl";
 
 import { SubscribeForm } from "./SubscribeForm";
@@ -70,7 +72,16 @@ export function NewsletterDialog({ ref }: { ref: React.Ref<NewsletterHandle> }) 
         />
 
         <p className="mt-10 max-w-[60ch] text-[12px] leading-relaxed whitespace-pre-line opacity-80">
-          {t("smallPrint")}
+          {t.rich("smallPrint", {
+            privacy: (chunks) => (
+              <Link
+                href="/aviso-legal"
+                className="underline decoration-[#F5C8E8] decoration-2 underline-offset-2 transition-opacity hover:opacity-70"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
         </p>
 
         <button

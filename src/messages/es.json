@@ -16,7 +16,7 @@
   },
   "metadata": {
     "title": "BIEN*VENIDAS — Editorial independiente",
-    "description": "Editorial independiente de Madrid y Barcelona: un refugio para historias desordenadas y descentralizadas. Investigaciones, ensayos, reflexiones y sentimientos.",
+    "description": "Somos una editorial independiente con base en Madrid y en Barcelona. Somos refugio de historias desordenadas y descentralizadas, investigación, ensayo y reflexión.",
     "pages": {
       "bienvenidas": "El mural de BIEN*VENIDAS, editorial independiente: recórrelo arrastrando en cualquier dirección.",
       "contacto": "Escríbenos para manuscritos, colaboraciones, prensa o librerías, y suscríbete a la newsletter de BIEN*VENIDAS."
@@ -131,7 +131,7 @@
     "sending": "un momento…",
     "success": "¡Listo! Ya estás en la lista.",
     "close": "Cerrar",
-    "smallPrint": "Al suscribirte a la newsletter, aceptas recibir nuestras newsletter y la política de privacidad.\nPuedes darte de baja en cualquier momento respondiendo «baja» a cualquiera de nuestros correos.",
+    "smallPrint": "Al suscribirte a la newsletter, aceptas recibir nuestras newsletter y <privacy>la política de privacidad</privacy>.\nPuedes darte de baja en cualquier momento respondiendo «baja» a cualquiera de nuestros correos.",
     "errors": {
       "email": "Ese correo no parece válido. Revísalo y vuelve a intentarlo.",
       "throttled": "Has hecho varios intentos seguidos. Espera unos minutos y vuelve a probar.",
