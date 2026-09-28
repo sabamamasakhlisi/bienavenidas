@@ -46,63 +46,39 @@ const OPEN_SCROLL_DELAY = 350;
 /** How many things stand on the shelf at once. */
 const MAX_ITEMS = 10;
 
-/** And on a phone, where the scenery crowds the titles out. */
-const COMPACT_MAX_ITEMS = 5;
+/** Everything that stands on the phone's shelf: every title, and the spines
+ * the layout names for it. */
+const isRequired = (item: ShelfItem) => item.kind === "book" || item.compact;
 
 /**
- * Trims the shelf to `max` items, keeping every catalogued title and filling
- * the rest with scenery in the order it was authored. Books are kept first so
- * a long run of spines can never push a real title off the shelf.
+ * Trims the shelf to `max` items, keeping every catalogued title and the
+ * spines marked for the phone, then filling the rest with scenery in the
+ * order it was authored.
+ *
+ * Titles and named spines are kept first for the same reason: a long run of
+ * scenery can push out the things the shelf was arranged around, and the
+ * phone's two spines are chosen by hand, so a wide screen that dropped one of
+ * them would be showing a shelf the phone can't be a subset of.
  */
 function trimLayout(layout: ShelfItem[], max: number) {
   if (layout.length <= max) return layout;
 
-  const bookCount = layout.filter((item) => item.kind === "book").length;
-  const spineBudget = Math.max(0, max - bookCount);
+  const budget = Math.max(0, max - layout.filter(isRequired).length);
 
-  const spinePositions = layout.reduce<number[]>((acc, item, index) => {
-    if (item.kind === "spine") acc.push(index);
+  const spare = layout.reduce<number[]>((acc, item, index) => {
+    if (!isRequired(item)) acc.push(index);
     return acc;
   }, []);
 
-  // Sample the spines evenly across the row rather than taking the first few,
+  // Sample what's left evenly across the row rather than taking the first few,
   // or every title would bunch up at whichever end still had budget left.
-  const step = spinePositions.length / Math.max(1, spineBudget);
+  const step = spare.length / Math.max(1, budget);
   const keep = new Set(
-    Array.from(
-      { length: spineBudget },
-      (_, n) => spinePositions[Math.floor(n * step)],
-    ),
+    Array.from({ length: budget }, (_, n) => spare[Math.floor(n * step)]),
   );
 
-  return layout.filter((item, index) => item.kind === "book" || keep.has(index));
+  return layout.filter((item, index) => isRequired(item) || keep.has(index));
 }
-
-/**
- * Perceived distance between two hex colours — 0 for a match, ~255 for
- * opposites. Weighted the way `BookCover` weights luminance, because the eye
- * reads a difference in green far more readily than the same step in blue.
- */
-function colourDistance(a: string, b: string) {
-  const channels = (hex: string) => {
-    const value = hex.replace("#", "");
-    return [
-      parseInt(value.slice(0, 2), 16),
-      parseInt(value.slice(2, 4), 16),
-      parseInt(value.slice(4, 6), 16),
-    ];
-  };
-
-  const [r1, g1, b1] = channels(a);
-  const [r2, g2, b2] = channels(b);
-
-  return Math.sqrt(
-    0.299 * (r1 - r2) ** 2 + 0.587 * (g1 - g2) ** 2 + 0.114 * (b1 - b2) ** 2,
-  );
-}
-
-/** Closer than this and two spines read as a repeat rather than two choices. */
-const COLOUR_APART = 25;
 
 /**
  * How the row's ends stand, on a shelf wide enough to show both.
@@ -140,60 +116,6 @@ function leanReach(lean: number, width: number, neighbourHeight: number) {
   const climb = (neighbourHeight + half * sin) / cos;
 
   return climb * sin - half * (1 - cos);
-}
-
-/**
- * The phone's shelf: every title, plus the few pieces of scenery that look
- * least like anything already standing there.
- *
- * Sampling evenly is right for a long row, where a near-repeat is lost among
- * thirty spines. On a row of five it is the first thing you see — and the
- * books' own spines count, so the pale pink scenery beside Open Call's pale
- * pink spine reads as one colour used twice. So each pick is the candidate
- * furthest from everything already on the shelf. Where nothing is far enough
- * the shelf simply comes up a spine short, which looks better than the repeat.
- */
-function pickCompact(
-  shelf: ShelfItem[],
-  reserved: string[],
-  max: number,
-): Set<ShelfItem> {
-  const titles = shelf.filter((item) => item.kind === "book");
-  const spines = shelf.filter(
-    (item): item is Extract<ShelfItem, { kind: "spine" }> =>
-      item.kind === "spine",
-  );
-
-  const budget = Math.max(0, max - titles.length);
-  const taken = [...reserved];
-  const keep = new Set<ShelfItem>();
-
-  for (let n = 0; n < budget; n += 1) {
-    let best: ShelfItem | undefined;
-    let bestApart = -1;
-
-    for (const candidate of spines) {
-      if (keep.has(candidate)) continue;
-
-      const apart = taken.reduce(
-        (nearest, colour) =>
-          Math.min(nearest, colourDistance(colour, candidate.color)),
-        Infinity,
-      );
-
-      if (apart > bestApart) {
-        bestApart = apart;
-        best = candidate;
-      }
-    }
-
-    if (!best || bestApart < COLOUR_APART) break;
-
-    keep.add(best);
-    taken.push((best as Extract<ShelfItem, { kind: "spine" }>).color);
-  }
-
-  return new Set([...titles, ...keep]);
 }
 
 /**
@@ -371,21 +293,22 @@ export function Shelf({
 
   const shelf = trimLayout(layout, MAX_ITEMS);
 
-  // Colours the shelf is already committed to: every title's own spine, except
-  // where artwork stands in for one. Scenery is then chosen to avoid them.
-  const reserved = shelf.flatMap((item) => {
-    if (item.kind !== "book") return [];
-    const { book } = books[item.slug];
-    return book.spineImage ? [] : [book.spine?.color ?? "#4d3738"];
-  });
-
-  // The phone's shorter shelf. Trimmed from the row that is actually rendered,
-  // not from the full layout: sampled independently the two passes pick
-  // different spines, and a spine the phone wants but the row never drew
-  // simply goes missing. Doing it in CSS rather than in state also keeps the
-  // server render and the first client paint identical — measuring first and
-  // then dropping half the row would show the full shelf for a frame, then snap.
-  const compactShelf = pickCompact(shelf, reserved, COMPACT_MAX_ITEMS);
+  /**
+   * The phone's shorter shelf: the titles, and the two spines the layout marks
+   * for it.
+   *
+   * Named rather than derived. This used to pick whichever scenery stood
+   * furthest in colour from everything already on the shelf, which is a fair
+   * guess when the palette is thirty-odd hues and nobody has said what the
+   * phone should show. With a palette this small it is only a guess getting in
+   * the way of an answer — and it could quietly come up a spine short whenever
+   * the two best candidates happened to sit inside its threshold.
+   *
+   * Kept in CSS rather than in state so the server render and the first client
+   * paint are identical: measuring first and then dropping half the row would
+   * show the full shelf for a frame, then snap.
+   */
+  const compactShelf = new Set(shelf.filter(isRequired));
 
   const gaps = GAP * Math.max(0, shelf.length - 1);
 
